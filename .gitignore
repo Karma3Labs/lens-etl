@@ -1,0 +1,6 @@
+.git
+key.json
+backup/
+buckets-full/
+buckets-update/
+sql-workdir/

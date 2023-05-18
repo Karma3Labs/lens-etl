@@ -1,0 +1,36 @@
+-- For post_comment table
+INSERT INTO public.post_comment
+SELECT * FROM public.post_comment_tmp
+ON CONFLICT (comment_id)
+DO UPDATE SET
+    contract_publication_id = EXCLUDED.contract_publication_id,
+    comment_by_profile_id = EXCLUDED.comment_by_profile_id,
+    post_id = EXCLUDED.post_id,
+    content_uri = EXCLUDED.content_uri,
+    s3_metadata_location = EXCLUDED.s3_metadata_location,
+    related_to_comment_id = EXCLUDED.related_to_comment_id,
+    collect_nft_address = EXCLUDED.collect_nft_address,
+    reference_implementation = EXCLUDED.reference_implementation,
+    reference_return_data = EXCLUDED.reference_return_data,
+    is_metadata_processed = EXCLUDED.is_metadata_processed,
+    has_error = EXCLUDED.has_error,
+    metadata_error_reason = EXCLUDED.metadata_error_reason,
+    tx_hash = EXCLUDED.tx_hash,
+    is_hidden = EXCLUDED.is_hidden,
+    app_id = EXCLUDED.app_id,
+    timeout_request = EXCLUDED.timeout_request,
+    block_timestamp = EXCLUDED.block_timestamp,
+    created_block_hash = EXCLUDED.created_block_hash,
+    metadata_version = EXCLUDED.metadata_version,
+    language = EXCLUDED.language,
+    region = EXCLUDED.region,
+    content_warning = EXCLUDED.content_warning,
+    main_content_focus = EXCLUDED.main_content_focus,
+    tags_vector = EXCLUDED.tags_vector,
+    custom_filters_gardener_flagged = EXCLUDED.custom_filters_gardener_flagged,
+    content = EXCLUDED.content,
+    is_gated = EXCLUDED.is_gated,
+    is_data_availability = EXCLUDED.is_data_availability,
+    data_availability_proofs = EXCLUDED.data_availability_proofs,
+    uuid = EXCLUDED.uuid,
+    source_timestamp = EXCLUDED.source_timestamp;

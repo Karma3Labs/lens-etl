@@ -1,0 +1,32 @@
+-- For profile table
+INSERT INTO public.profile
+SELECT * FROM public.profile_tmp
+ON CONFLICT (profile_id)
+DO UPDATE SET
+    name = EXCLUDED.name,
+    handle = EXCLUDED.handle,
+    profile_with_weights = EXCLUDED.profile_with_weights,
+    profile_picture_s3_url = EXCLUDED.profile_picture_s3_url,
+    cover_picture_s3_url = EXCLUDED.cover_picture_s3_url,
+    is_profile_picture_onchain = EXCLUDED.is_profile_picture_onchain,
+    owned_by = EXCLUDED.owned_by,
+    is_burnt = EXCLUDED.is_burnt,
+    nft_contract = EXCLUDED.nft_contract,
+    nft_token_id = EXCLUDED.nft_token_id,
+    nft_owner = EXCLUDED.nft_owner,
+    nft_chain_id = EXCLUDED.nft_chain_id,
+    is_default = EXCLUDED.is_default,
+    metadata_url = EXCLUDED.metadata_url,
+    metadata_s3_url = EXCLUDED.metadata_s3_url,
+    is_metadata_processed = EXCLUDED.is_metadata_processed,
+    has_error = EXCLUDED.has_error,
+    timeout_request = EXCLUDED.timeout_request,
+    metadata_error_reason = EXCLUDED.metadata_error_reason,
+    app_id = EXCLUDED.app_id,
+    metadata_block_timestamp = EXCLUDED.metadata_block_timestamp,
+    metadata_created_block_hash = EXCLUDED.metadata_created_block_hash,
+    metadata_tx_hash = EXCLUDED.metadata_tx_hash,
+    block_timestamp = EXCLUDED.block_timestamp,
+    created_block_hash = EXCLUDED.created_block_hash,
+    uuid = EXCLUDED.uuid,
+    source_timestamp = EXCLUDED.source_timestamp;
