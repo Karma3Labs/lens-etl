@@ -51,13 +51,19 @@ postgres \
 -c shared_buffers=${BUFFER_SIZE} -c max_connections=1000
 ```
 
-## Step 2 - Create you local database
+## Step 2 - Setup your local database
 Once you have Postgres up and running, run a script to create a database called `lens_db`.  Then populate it with the default schema that will be used as part of the ETL process.
 ```
 # Check via ipconfig to see what your Docker's internal host IP address is
-DOCKER_HOST=172.17.0.1
-psql -h 172.17.0.1 -U postgres -c 'CREATE DATABASE lens_db;'
+HOST=172.17.0.1
+psql -h ${HOST} -U postgres -c 'CREATE DATABASE lens_db;'
 ```
+
+Bootstrap the database by creating tables necessary to receive the dataset from Lens BigQuery
+```
+psql -h ${HOST} -U postgres -f lens_bigquery_schema.sql
+```
+
 
 ## Step 3 - Review ETL scripts
 `run-etl-full.sh` - This script will perform a full export of several tables at Lens BigQuery as specified in the `sql-import-full/` 
