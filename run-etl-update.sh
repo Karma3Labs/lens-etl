@@ -1,14 +1,25 @@
 #!/bin/bash
-WORK_DIR=/home/ubuntu/lens-etl
+WORK_DIR=${WORK_DIR:-/home/ubuntu/lens-etl}
+GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-k3l-lens-bigquery-update}
+DB_HOST=${DB_HOST:-172.17.0.1}
+DB_PORT=${DB_PORT:-5432}
+DB_USER=${DB_USER:-postgres}
+DB_NAME=${DB_NAME:-lens_bigquery}
+DB_PASS=${DB_PASS:-some_safe_password}
 SQL_TEMPLATE=sql-import-update
-GCS_BUCKET_NAME=k3l-lens-bigquery-update
-EXPORT_DIR=buckets-update
-LOG=/var/log/lens-etl/$(basename "$0").log
-DB_HOST=172.17.0.1
-DB_USER=postgres
-DB_NAME=lens_bigquery
-SQL_UPSERT=sql-upsert
 SQL_WORKDIR=sql-workdir
+SQL_UPSERT=sql-upsert
+EXPORT_DIR=buckets-update
+LOG_DIR=/var/log/lens-etl
+LOG=${LOG_DIR}/$(basename "$0").log
+
+# Remove the comment below to debug
+set -x
+
+# Create the log directory it, this is an idempotent task
+USER=${USER:-ubuntu}
+sudo mkdir -p $LOG_DIR
+sudo chown $USER: $LOG_DIR
 
 JOBTIME=$(date +%Y%m%d%H%M%S)
 
@@ -37,7 +48,7 @@ starting_point=''
 getStartingPoint() {
   local_table=${1/public_/public.}
   sql="SELECT ${2,,} FROM $local_table ORDER BY ${2,,} DESC LIMIT 1;"
-  starting_point=`/usr/bin/psql -t -h $DB_HOST -U $DB_USER -d $DB_NAME -c "$sql" | head -1 | xargs`
+  starting_point=`/usr/bin/psql -t -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "$sql" | head -1 | xargs`
 }
 
 #log "Clear out Cloud Storage buckets"
@@ -94,18 +105,18 @@ for dir in ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}/*/; do
   if [ "${bq_table_behavior[$table_name]}" == 'REPLACE' ]; then
     tmp_suffix="_tmp"
     log "CREATE a new table $local_table${tmp_suffix} and make sure it is clean"
-    /usr/bin/psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "CREATE TABLE IF NOT EXISTS $local_table${tmp_suffix} (LIKE $local_table INCLUDING ALL); TRUNCATE TABLE $local_table${tmp_suffix};" >> $LOG 2>&1
+    /usr/bin/psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "CREATE TABLE IF NOT EXISTS $local_table${tmp_suffix} (LIKE $local_table INCLUDING ALL); TRUNCATE TABLE $local_table${tmp_suffix};" >> $LOG 2>&1
   fi
 
   for file in ${files[@]}; do
     log "Importing $dir/$file"
-    /usr/bin/psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "\COPY $local_table${tmp_suffix} FROM '$dir/$file' WITH (DELIMITER ',', FORMAT csv, HEADER true)" >> $LOG 2>&1
+    /usr/bin/psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "\COPY $local_table${tmp_suffix} FROM '$dir/$file' WITH (DELIMITER ',', FORMAT csv, HEADER true)" >> $LOG 2>&1
   done
 
   if [ "${bq_table_behavior[$table_name]}" == 'REPLACE' ]; then
     log "Run the INSERT or UPDATE query in ${WORK_DIR}/${SQL_UPSERT}/$table_name.sql"
-    /usr/bin/psql -h $DB_HOST -U $DB_USER -d $DB_NAME -f ${WORK_DIR}/${SQL_UPSERT}/$table_name.sql >> $LOG 2>&1
-    /usr/bin/psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "DROP TABLE $local_table${tmp_suffix}" >> $LOG 2>&1
+    /usr/bin/psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f ${WORK_DIR}/${SQL_UPSERT}/$table_name.sql >> $LOG 2>&1
+    /usr/bin/psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "DROP TABLE $local_table${tmp_suffix}" >> $LOG 2>&1
   fi
 done
 

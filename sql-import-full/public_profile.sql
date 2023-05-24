@@ -1,6 +1,6 @@
 EXPORT DATA
   OPTIONS (
-    uri = 'gs://k3l-lens-bigquery-jack/public_profile/*.csv',
+    uri = 'gs://GCS_BUCKET_NAME/public_profile/*.csv',
     format = 'CSV',
     overwrite = true,
     header = true,

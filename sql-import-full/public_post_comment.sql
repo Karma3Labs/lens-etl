@@ -1,6 +1,6 @@
 EXPORT DATA
   OPTIONS (
-    uri = 'gs://k3l-lens-bigquery-jack/public_post_comment/*.csv',
+    uri = 'gs://GCS_BUCKET_NAME/public_post_comment/*.csv',
     format = 'CSV',
     overwrite = true,
     header = true,

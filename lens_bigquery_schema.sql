@@ -21,6 +21,19 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: feed; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.feed (
+    strategy_name text,
+    post_id text NOT NULL,
+    v double precision
+);
+
+
+ALTER TABLE public.feed OWNER TO postgres;
+
+--
 -- Name: follower; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -37,6 +50,20 @@ CREATE TABLE public.follower (
 
 
 ALTER TABLE public.follower OWNER TO postgres;
+
+--
+-- Name: globaltrust; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.globaltrust (
+    strategy_name character varying(255),
+    i character varying(255),
+    v double precision,
+    date date DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.globaltrust OWNER TO postgres;
 
 --
 -- Name: profile; Type: TABLE; Schema: public; Owner: postgres
@@ -98,6 +125,25 @@ CREATE TABLE public.publication_collect_module_collected_records (
 ALTER TABLE public.publication_collect_module_collected_records OWNER TO postgres;
 
 --
+-- Name: k3l_collect_nft; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.k3l_collect_nft AS
+ SELECT concat(profile.profile_id, '-', publication_collect_module_collected_records.collect_publication_nft_id) AS collect_nft_id,
+    profile.profile_id,
+    publication_collect_module_collected_records.collect_publication_nft_id AS pub_id,
+    "substring"((publication_collect_module_collected_records.publication_id)::text, 1, (POSITION(('-'::text) IN (publication_collect_module_collected_records.publication_id)) - 1)) AS to_profile_id,
+    "substring"((publication_collect_module_collected_records.publication_id)::text, (POSITION(('-'::text) IN (publication_collect_module_collected_records.publication_id)) + 1)) AS to_pub_id,
+    publication_collect_module_collected_records.record_id AS metadata,
+    publication_collect_module_collected_records.block_timestamp AS created_at
+   FROM (public.publication_collect_module_collected_records
+     LEFT JOIN public.profile ON (((publication_collect_module_collected_records.collected_by)::text = (profile.owned_by)::text)))
+  WITH NO DATA;
+
+
+ALTER TABLE public.k3l_collect_nft OWNER TO postgres;
+
+--
 -- Name: post_comment; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -140,6 +186,53 @@ CREATE TABLE public.post_comment (
 ALTER TABLE public.post_comment OWNER TO postgres;
 
 --
+-- Name: k3l_comments; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.k3l_comments AS
+ SELECT post_comment.comment_id,
+    post_comment.comment_by_profile_id AS profile_id,
+    post_comment.contract_publication_id AS pub_id,
+    "substring"((post_comment.post_id)::text, 1, (POSITION(('-'::text) IN (post_comment.post_id)) - 1)) AS to_profile_id,
+    "substring"((post_comment.post_id)::text, (POSITION(('-'::text) IN (post_comment.post_id)) + 1)) AS to_pub_id,
+    post_comment.content_uri,
+    post_comment.block_timestamp AS created_at
+   FROM public.post_comment
+  WITH NO DATA;
+
+
+ALTER TABLE public.k3l_comments OWNER TO postgres;
+
+--
+-- Name: k3l_follows; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.k3l_follows AS
+ SELECT profile.profile_id,
+    follower.follow_profile_id AS to_profile_id,
+    follower.block_timestamp AS created_at
+   FROM (public.follower
+     LEFT JOIN public.profile ON (((follower.address)::text = (profile.owned_by)::text)))
+  WITH NO DATA;
+
+
+ALTER TABLE public.k3l_follows OWNER TO postgres;
+
+--
+-- Name: k3l_follow_counts; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.k3l_follow_counts AS
+ SELECT k3l_follows.to_profile_id,
+    count(*) AS count
+   FROM public.k3l_follows
+  GROUP BY k3l_follows.to_profile_id
+  WITH NO DATA;
+
+
+ALTER TABLE public.k3l_follow_counts OWNER TO postgres;
+
+--
 -- Name: profile_post; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -180,6 +273,146 @@ CREATE TABLE public.profile_post (
 
 
 ALTER TABLE public.profile_post OWNER TO postgres;
+
+--
+-- Name: k3l_mirrors; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.k3l_mirrors AS
+ SELECT related_posts.post_id,
+    related_posts.profile_id,
+    related_posts.pub_id,
+    "substring"((related_posts.is_related_to)::text, 1, (POSITION(('-'::text) IN (related_posts.is_related_to)) - 1)) AS to_profile_id,
+    "substring"((related_posts.is_related_to)::text, (POSITION(('-'::text) IN (related_posts.is_related_to)) + 1)) AS to_pub_id,
+    related_posts.block_timestamp AS created_at
+   FROM ( SELECT profile_post.post_id,
+            profile_post.profile_id,
+            profile_post.contract_publication_id AS pub_id,
+            COALESCE(profile_post.is_related_to_post, profile_post.is_related_to_comment) AS is_related_to,
+            profile_post.block_timestamp
+           FROM public.profile_post
+          WHERE ((profile_post.is_related_to_post IS NOT NULL) OR (profile_post.is_related_to_comment IS NOT NULL))) related_posts
+  WITH NO DATA;
+
+
+ALTER TABLE public.k3l_mirrors OWNER TO postgres;
+
+--
+-- Name: k3l_posts; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.k3l_posts AS
+ SELECT profile_post.post_id,
+    profile_post.profile_id,
+    profile_post.contract_publication_id AS pub_id,
+    profile_post.content_uri,
+    profile_post.block_timestamp AS created_at
+   FROM public.profile_post
+  WITH NO DATA;
+
+
+ALTER TABLE public.k3l_posts OWNER TO postgres;
+
+--
+-- Name: k3l_profiles; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.k3l_profiles AS
+ SELECT profile.profile_id,
+    profile.owned_by AS owner_address,
+    profile.handle,
+    profile.profile_picture_s3_url AS image_uri,
+    profile.metadata_block_timestamp AS created_at
+   FROM public.profile
+  WITH NO DATA;
+
+
+ALTER TABLE public.k3l_profiles OWNER TO postgres;
+
+--
+-- Name: knex_migrations; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.knex_migrations (
+    id integer NOT NULL,
+    name character varying(255),
+    batch integer,
+    migration_time timestamp with time zone
+);
+
+
+ALTER TABLE public.knex_migrations OWNER TO postgres;
+
+--
+-- Name: knex_migrations_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.knex_migrations_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.knex_migrations_id_seq OWNER TO postgres;
+
+--
+-- Name: knex_migrations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.knex_migrations_id_seq OWNED BY public.knex_migrations.id;
+
+
+--
+-- Name: knex_migrations_lock; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.knex_migrations_lock (
+    index integer NOT NULL,
+    is_locked integer
+);
+
+
+ALTER TABLE public.knex_migrations_lock OWNER TO postgres;
+
+--
+-- Name: knex_migrations_lock_index_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.knex_migrations_lock_index_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.knex_migrations_lock_index_seq OWNER TO postgres;
+
+--
+-- Name: knex_migrations_lock_index_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.knex_migrations_lock_index_seq OWNED BY public.knex_migrations_lock.index;
+
+
+--
+-- Name: localtrust; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.localtrust (
+    strategy_name character varying(255),
+    i character varying(255) NOT NULL,
+    j character varying(255) NOT NULL,
+    v double precision NOT NULL,
+    date date DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public.localtrust OWNER TO postgres;
 
 --
 -- Name: profile_stats; Type: TABLE; Schema: public; Owner: postgres
@@ -277,6 +510,62 @@ CREATE TABLE public.publication_stats (
 
 ALTER TABLE public.publication_stats OWNER TO postgres;
 
+--
+-- Name: strategies; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.strategies (
+    id integer NOT NULL,
+    pretrust text,
+    localtrust text,
+    alpha real
+);
+
+
+ALTER TABLE public.strategies OWNER TO postgres;
+
+--
+-- Name: strategies_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.strategies_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.strategies_id_seq OWNER TO postgres;
+
+--
+-- Name: strategies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.strategies_id_seq OWNED BY public.strategies.id;
+
+
+--
+-- Name: knex_migrations id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.knex_migrations ALTER COLUMN id SET DEFAULT nextval('public.knex_migrations_id_seq'::regclass);
+
+
+--
+-- Name: knex_migrations_lock index; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.knex_migrations_lock ALTER COLUMN index SET DEFAULT nextval('public.knex_migrations_lock_index_seq'::regclass);
+
+
+--
+-- Name: strategies id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.strategies ALTER COLUMN id SET DEFAULT nextval('public.strategies_id_seq'::regclass);
+
 
 --
 -- Name: follower follower_new_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
@@ -284,6 +573,30 @@ ALTER TABLE public.publication_stats OWNER TO postgres;
 
 ALTER TABLE ONLY public.follower
     ADD CONSTRAINT follower_new_pkey PRIMARY KEY (address, follow_profile_id);
+
+
+--
+-- Name: globaltrust globaltrust_strategy_name_date_i_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.globaltrust
+    ADD CONSTRAINT globaltrust_strategy_name_date_i_unique UNIQUE (strategy_name, date, i);
+
+
+--
+-- Name: knex_migrations_lock knex_migrations_lock_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.knex_migrations_lock
+    ADD CONSTRAINT knex_migrations_lock_pkey PRIMARY KEY (index);
+
+
+--
+-- Name: knex_migrations knex_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.knex_migrations
+    ADD CONSTRAINT knex_migrations_pkey PRIMARY KEY (id);
 
 
 --
@@ -356,3 +669,74 @@ ALTER TABLE ONLY public.publication_stats
 
 ALTER TABLE ONLY public.publication_reaction_records
     ADD CONSTRAINT record_id PRIMARY KEY (record_id);
+
+
+--
+-- Name: strategies strategies_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.strategies
+    ADD CONSTRAINT strategies_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: strategies strategies_pt_lt_a_idx; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.strategies
+    ADD CONSTRAINT strategies_pt_lt_a_idx UNIQUE (pretrust, localtrust, alpha);
+
+
+--
+-- Name: feed_strategy_name_index; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX feed_strategy_name_index ON public.feed USING btree (strategy_name);
+
+
+--
+-- Name: feed_strategy_name_post_id_index; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX feed_strategy_name_post_id_index ON public.feed USING btree (strategy_name, post_id);
+
+
+--
+-- Name: globaltrust_strategy_name_date_index; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX globaltrust_strategy_name_date_index ON public.globaltrust USING btree (strategy_name, date);
+
+
+--
+-- Name: k3l_follow_counts_profile_id_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX k3l_follow_counts_profile_id_idx ON public.k3l_follow_counts USING btree (to_profile_id);
+
+
+--
+-- Name: localtrust_id_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX localtrust_id_idx ON public.localtrust USING btree (strategy_name);
+
+
+--
+-- Name: profile_post_new_post_id_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX profile_post_new_post_id_idx ON public.profile_post USING btree (post_id);
+
+
+--
+-- Name: publication_collect_module_details_new_publication_id_idx1; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX publication_collect_module_details_new_publication_id_idx1 ON public.publication_collect_module_details USING btree (publication_id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
