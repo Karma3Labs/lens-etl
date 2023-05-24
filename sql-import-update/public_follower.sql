@@ -18,7 +18,7 @@ AS (
   FROM
     public_follower
   WHERE
-    block_timestamp > 'BLOCK_BLOCK_TIMESTAMP'
+    block_timestamp > 'BLOCK_TIMESTAMP'
   ORDER BY
     block_timestamp DESC
 );

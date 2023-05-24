@@ -1,5 +1,6 @@
 .git
-key.json
+.env
+keyfile.json
 backup/
 buckets-full/
 buckets-update/

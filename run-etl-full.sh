@@ -1,18 +1,19 @@
 #!/bin/bash
-WORK_DIR=${WORK_DIR:-/home/ubuntu/lens-etl}
-GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-k3l-lens-bigquery-full}
+WORK_DIR=${WORK_DIR:-"/home/ubuntu/lens-etl"}; source $WORK_DIR/.env
+GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-${GCS_BUCKET_FULL:-""}}
+GCP_ACTIVE_ACCT=$(gcloud auth list|grep "*"|awk {'print $2'})
+GCP_TASK_ACCT=${GCP_TASK_ACCT:-""}
 DB_HOST=${DB_HOST:-172.17.0.1}
 DB_PORT=${DB_PORT:-5432}
 DB_USER=${DB_USER:-postgres}
 DB_NAME=${DB_NAME:-lens_bigquery}
-DB_PASS=${DB_PASS:-some_safe_password}
 SQL_TEMPLATE=sql-import-full
 EXPORT_DIR=buckets-full
-LOG_DIR=/var/log/lens-etl
-LOG=$LOG_DIR/$(basename "$0").log
+LOG_DIR=${LOG_DIR:-"/var/log/lens-etl"}
+LOG=${LOG_DIR}/$(basename "$0").log
 
 # Remove the comment below to debug
-#set -x
+set -x
 
 # Create the log directory it, this is an idempotent task
 USER=${USER:-ubuntu}
@@ -25,6 +26,11 @@ function log() {
     echo "*******************************************************************************************************" >> $LOG
     echo "`date` - $1" >> $LOG
 }
+
+# Switch to a task-related GCP account if it is different with the active account
+if [ $GCP_TASK_ACCT != $GCP_ACTIVE_ACCT ]; then
+  gcloud config set account "$GCP_TASK_ACCT"
+fi
 
 log "Clear out Cloud Storage buckets"
 /usr/bin/gsutil -m rm -r "gs://${GCS_BUCKET_NAME}/*" >> $LOG 2>&1
@@ -41,6 +47,11 @@ log "Importing files from Cloud Storage and remove the old ones"
 mkdir -p ${WORK_DIR}/${EXPORT_DIR}
 mkdir -p ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}
 /usr/bin/gsutil -m cp -r "gs://${GCS_BUCKET_NAME}/*" ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}/ >> $LOG 2>&1
+
+# Switch back to your current active account if it is different
+if [ $GCP_TASK_ACCT != $GCP_ACTIVE_ACCT ]; then
+  gcloud config set account "$GCP_ACTIVE_ACCT"
+fi
 
 # Define an array to store directory names
 dirs=()

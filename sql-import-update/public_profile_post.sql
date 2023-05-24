@@ -42,7 +42,7 @@ AS (
   FROM
     public_profile_post
   WHERE
-    block_timestamp > 'BLOCK_BLOCK_TIMESTAMP'
+    block_timestamp > 'BLOCK_TIMESTAMP'
   ORDER BY
     block_timestamp DESC
 );

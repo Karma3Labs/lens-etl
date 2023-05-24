@@ -25,7 +25,7 @@ AS (
   FROM
     public_publication_collect_module_details
   WHERE
-    block_timestamp > 'BLOCK_BLOCK_TIMESTAMP'
+    block_timestamp > 'BLOCK_TIMESTAMP'
   ORDER BY
     block_timestamp DESC
 );

@@ -1,16 +1,17 @@
 #!/bin/bash
-WORK_DIR=${WORK_DIR:-/home/ubuntu/lens-etl}
-GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-k3l-lens-bigquery-update}
+WORK_DIR=${WORK_DIR:-"/home/ubuntu/lens-etl"}; source $WORK_DIR/.env
+GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-${GCS_BUCKET_UPDATE:-""}}
+GCP_ACTIVE_ACCT=$(gcloud auth list|grep "*"|awk {'print $2'})
+GCP_TASK_ACCT=${GCP_TASK_ACCT:-""}
 DB_HOST=${DB_HOST:-172.17.0.1}
 DB_PORT=${DB_PORT:-5432}
 DB_USER=${DB_USER:-postgres}
 DB_NAME=${DB_NAME:-lens_bigquery}
-DB_PASS=${DB_PASS:-some_safe_password}
 SQL_TEMPLATE=sql-import-update
 SQL_WORKDIR=sql-workdir
 SQL_UPSERT=sql-upsert
 EXPORT_DIR=buckets-update
-LOG_DIR=/var/log/lens-etl
+LOG_DIR=${LOG_DIR:-"/var/log/lens-etl"}
 LOG=${LOG_DIR}/$(basename "$0").log
 
 # Remove the comment below to debug
@@ -37,6 +38,9 @@ declare -A bq_table_behavior=( \
   [public_publication_stats]=REPLACE \
 )
 
+if [ $GCP_TASK_ACCT != $GCP_ACTIVE_ACCT ]; then
+  gcloud config set account "$GCP_TASK_ACCT"
+fi
 
 log() {
     echo "*******************************************************************************************************" >> $LOG
@@ -84,6 +88,10 @@ log "Remove folders in local drive and downloading CSV files from GCS "
 mkdir -p ${WORK_DIR}/${EXPORT_DIR}
 mkdir -p ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}
 /usr/bin/gsutil -m cp -r "gs://${GCS_BUCKET_NAME}/*" ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}/ >> $LOG 2>&1
+
+if [ $GCP_TASK_ACCT != $GCP_ACTIVE_ACCT ]; then
+  gcloud config set account "$GCP_ACTIVE_ACCT"
+fi
 
 # Define an array to store directory names
 dirs=()
