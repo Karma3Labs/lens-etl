@@ -17,8 +17,6 @@ AS (
     datastream_metadata.source_timestamp 
   FROM
     public_follower
-  WHERE
-    block_timestamp > 'BLOCK_TIMESTAMP'
   ORDER BY
     block_timestamp DESC
 );

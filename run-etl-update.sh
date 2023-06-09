@@ -26,7 +26,7 @@ JOBTIME=$(date +%Y%m%d%H%M%S)
 
 # Declare which tables are to be updated, and which needs to be replaced
 declare -A bq_table_behavior=( \
-  [public_follower]=BLOCK_TIMESTAMP \
+  [public_follower]=REPLACE \
   [public_post_comment]=BLOCK_TIMESTAMP \
   [public_profile]=BLOCK_TIMESTAMP \
   [public_profile_post]=BLOCK_TIMESTAMP \
