@@ -2,7 +2,7 @@
 WORK_DIR=${WORK_DIR:-"/home/ubuntu/lens-etl"}; source $WORK_DIR/.env
 GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-${GCS_BUCKET_FULL:-""}}
 GCP_ACTIVE_ACCT=$(gcloud auth list|grep "*"|awk {'print $2'})
-GCP_TASK_ACCT=${GCP_TASK_ACCT:-""}
+GCP_TASK_ACCT=${GCP_TASK_ACCT:-"$(gcloud config get account --quiet)"}
 DB_HOST=${DB_HOST:-172.17.0.1}
 DB_PORT=${DB_PORT:-5432}
 DB_USER=${DB_USER:-postgres}
@@ -50,6 +50,7 @@ mkdir -p ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}
 
 # Switch back to your current active account if it is different
 if [ $GCP_TASK_ACCT != $GCP_ACTIVE_ACCT ]; then
+  echo "Setting GCS account as $GCP_TASK_ACCT"
   gcloud config set account "$GCP_ACTIVE_ACCT"
 fi
 
