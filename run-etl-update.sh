@@ -31,6 +31,7 @@ declare -A bq_table_behavior=( \
   [public_profile]=BLOCK_TIMESTAMP \
   [public_profile_post]=BLOCK_TIMESTAMP \
   [public_profile_stats]=REPLACE \
+  [public_profile_curated]=REPLACE \
   [public_publication_collect_module_collected_records]=BLOCK_TIMESTAMP \
   [public_publication_collect_module_details]=BLOCK_TIMESTAMP \
   [public_publication_collect_module_multirecipient_details]=REPLACE \
