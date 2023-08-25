@@ -478,6 +478,37 @@ CREATE MATERIALIZED VIEW public.k3l_comments AS
 ALTER TABLE public.k3l_comments OWNER TO postgres;
 
 --
+-- Name: profile_curated; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.profile_curated (
+    profile_id character varying(66) NOT NULL,
+    created_on timestamp with time zone,
+    uuid character varying,
+    source_timestamp bigint
+);
+
+
+ALTER TABLE public.profile_curated OWNER TO postgres;
+
+--
+-- Name: k3l_curated_profiles; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.k3l_curated_profiles AS
+ SELECT profile.profile_id,
+    profile.owned_by AS owner_address,
+    profile.handle,
+    profile.profile_picture_s3_url AS image_uri,
+    profile.metadata_block_timestamp AS created_at
+   FROM (public.profile
+     JOIN public.profile_curated ON (((profile.profile_id)::text = (profile_curated.profile_id)::text)))
+  WITH NO DATA;
+
+
+ALTER TABLE public.k3l_curated_profiles OWNER TO postgres;
+
+--
 -- Name: k3l_posts; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -544,7 +575,8 @@ CREATE MATERIALIZED VIEW public.k3l_feed AS
     k3l_posts.created_at,
     feed.strategy_name,
     k3l_posts.content_uri,
-    profile_post.main_content_focus
+    profile_post.main_content_focus,
+    profile_post.language
    FROM (((((public.feed
      JOIN public.k3l_posts ON (((k3l_posts.post_id)::text = feed.post_id)))
      JOIN public.publication_stats ON ((feed.post_id = (publication_stats.publication_id)::text)))
@@ -588,6 +620,7 @@ CREATE MATERIALIZED VIEW public.k3l_following_feed AS
     pstats.profile_id,
     pstats.created_at,
     pstats.main_content_focus,
+    pstats.language,
     pstats.handle,
     pstats.mirrors_count,
     pstats.comments_count,
@@ -602,6 +635,7 @@ CREATE MATERIALIZED VIEW public.k3l_following_feed AS
             p.profile_id,
             p.created_at,
             post.main_content_focus,
+            post.language,
             prof.handle,
             ps.total_amount_of_mirrors AS mirrors_count,
             ps.total_amount_of_comments AS comments_count,
@@ -760,20 +794,6 @@ CREATE TABLE public.localtrust (
 
 
 ALTER TABLE public.localtrust OWNER TO postgres;
-
---
--- Name: profile_curated; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.profile_curated (
-    profile_id character varying(66) NOT NULL,
-    created_on timestamp with time zone,
-    uuid character varying,
-    source_timestamp bigint
-);
-
-
-ALTER TABLE public.profile_curated OWNER TO postgres;
 
 --
 -- Name: profile_stats; Type: TABLE; Schema: public; Owner: postgres
@@ -1073,6 +1093,13 @@ ALTER TABLE ONLY public.strategies
 
 
 --
+-- Name: follower_block_timestamp_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX follower_block_timestamp_idx ON public.follower USING btree (block_timestamp);
+
+
+--
 -- Name: globaltrust_strategy_name_date_index; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1164,10 +1191,45 @@ CREATE INDEX localtrust_id_idx ON public.localtrust USING btree (strategy_name);
 
 
 --
+-- Name: post_comment_block_timestamp_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX post_comment_block_timestamp_idx ON public.post_comment USING btree (block_timestamp);
+
+
+--
+-- Name: profile_block_timestamp_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX profile_block_timestamp_idx ON public.profile USING btree (block_timestamp);
+
+
+--
+-- Name: profile_post_block_timestamp_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX profile_post_block_timestamp_idx ON public.profile_post USING btree (block_timestamp);
+
+
+--
 -- Name: profile_post_new_post_id_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX profile_post_new_post_id_idx ON public.profile_post USING btree (post_id);
+
+
+--
+-- Name: publication_collect_module_collected_records_block_timestamp_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX publication_collect_module_collected_records_block_timestamp_id ON public.publication_collect_module_collected_records USING btree (block_timestamp);
+
+
+--
+-- Name: publication_collect_module_details_block_timestamp_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX publication_collect_module_details_block_timestamp_idx ON public.publication_collect_module_details USING btree (block_timestamp);
 
 
 --
