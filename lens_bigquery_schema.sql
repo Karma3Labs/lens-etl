@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 15.2 (Debian 15.2-1.pgdg110+1)
+-- Dumped from database version 15.4 (Debian 15.4-2.pgdg120+1)
 -- Dumped by pg_dump version 15.4
 
 SET statement_timeout = 0;
@@ -711,6 +711,208 @@ CREATE MATERIALIZED VIEW public.k3l_mirrors AS
 ALTER TABLE public.k3l_mirrors OWNER TO postgres;
 
 --
+-- Name: publication_reaction_records; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.publication_reaction_records (
+    publication_id character varying(133),
+    reaction character varying(300),
+    actioned_by_profile_id character varying(66),
+    action_at timestamp with time zone,
+    undone_on timestamp with time zone,
+    has_undone boolean,
+    record_id character varying NOT NULL,
+    uuid character varying,
+    source_timestamp bigint
+);
+
+
+ALTER TABLE public.publication_reaction_records OWNER TO postgres;
+
+--
+-- Name: k3l_upvotes; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.k3l_upvotes AS
+ SELECT publication_reaction_records.publication_id AS pub_id,
+    publication_reaction_records.actioned_by_profile_id AS profile_id,
+    "substring"((publication_reaction_records.publication_id)::text, 1, (POSITION(('-'::text) IN (publication_reaction_records.publication_id)) - 1)) AS to_profile_id
+   FROM public.publication_reaction_records
+  WHERE (((publication_reaction_records.reaction)::text = 'UPVOTE'::text) AND (publication_reaction_records.has_undone IS FALSE))
+  WITH NO DATA;
+
+
+ALTER TABLE public.k3l_upvotes OWNER TO postgres;
+
+--
+-- Name: k3l_interactions; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.k3l_interactions AS
+ WITH _posts_actions AS (
+         SELECT k3l_posts.profile_id AS pid,
+            count(1) AS num_posts
+           FROM public.k3l_posts
+          GROUP BY k3l_posts.profile_id
+        ), _posts_actions_stats AS (
+         SELECT percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((_posts_actions_1.num_posts)::double precision)) AS median,
+            avg(_posts_actions_1.num_posts) AS average
+           FROM _posts_actions _posts_actions_1
+        ), _mirrors_actions AS (
+         SELECT k3l_mirrors.profile_id AS pid,
+            count(1) AS num_mirrors
+           FROM public.k3l_mirrors
+          GROUP BY k3l_mirrors.profile_id
+        ), _mirrors_actions_stats AS (
+         SELECT percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((_mirrors_actions_1.num_mirrors)::double precision)) AS median,
+            avg(_mirrors_actions_1.num_mirrors) AS average
+           FROM _mirrors_actions _mirrors_actions_1
+        ), _mirrors_interactions AS (
+         SELECT k3l_mirrors.to_profile_id AS pid,
+            count(1) AS num_mirrors
+           FROM public.k3l_mirrors
+          GROUP BY k3l_mirrors.to_profile_id
+        ), _mirrors_interactions_stats AS (
+         SELECT percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((_mirrors_interactions_1.num_mirrors)::double precision)) AS median,
+            avg(_mirrors_interactions_1.num_mirrors) AS average
+           FROM _mirrors_interactions _mirrors_interactions_1
+        ), _collects_actions AS (
+         SELECT k3l_collect_nft.profile_id AS pid,
+            count(1) AS num_collects
+           FROM public.k3l_collect_nft
+          GROUP BY k3l_collect_nft.profile_id
+        ), _collects_actions_stats AS (
+         SELECT percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((_collects_actions.num_collects)::double precision)) AS median,
+            avg(_collects_actions.num_collects) AS average
+           FROM _collects_actions
+        ), _collects_interactions AS (
+         SELECT k3l_collect_nft.to_profile_id AS pid,
+            count(1) AS num_collects
+           FROM public.k3l_collect_nft
+          GROUP BY k3l_collect_nft.to_profile_id
+        ), _collects_interactions_stats AS (
+         SELECT percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((_collects_interactions_1.num_collects)::double precision)) AS median,
+            avg(_collects_interactions_1.num_collects) AS average
+           FROM _collects_interactions _collects_interactions_1
+        ), _comments_actions AS (
+         SELECT k3l_comments.profile_id AS pid,
+            count(1) AS num_comments
+           FROM public.k3l_comments
+          GROUP BY k3l_comments.profile_id
+        ), _comments_actions_stats AS (
+         SELECT percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((_comments_actions_1.num_comments)::double precision)) AS median,
+            avg(_comments_actions_1.num_comments) AS average
+           FROM _comments_actions _comments_actions_1
+        ), _comments_interactions AS (
+         SELECT k3l_comments.to_profile_id AS pid,
+            count(1) AS num_comments
+           FROM public.k3l_comments
+          GROUP BY k3l_comments.to_profile_id
+        ), _comments_interactions_stats AS (
+         SELECT percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((_comments_interactions_1.num_comments)::double precision)) AS median,
+            avg(_comments_interactions_1.num_comments) AS average
+           FROM _comments_interactions _comments_interactions_1
+        ), _likes_actions AS (
+         SELECT k3l_upvotes.profile_id AS pid,
+            count(1) AS num_likes
+           FROM public.k3l_upvotes
+          GROUP BY k3l_upvotes.profile_id
+        ), _likes_actions_stats AS (
+         SELECT percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((_likes_actions_1.num_likes)::double precision)) AS median,
+            avg(_likes_actions_1.num_likes) AS average
+           FROM _likes_actions _likes_actions_1
+        ), _likes_interactions AS (
+         SELECT k3l_upvotes.to_profile_id AS pid,
+            count(1) AS num_likes
+           FROM public.k3l_upvotes
+          GROUP BY k3l_upvotes.to_profile_id
+        ), _likes_interactions_stats AS (
+         SELECT percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((_likes_interactions_1.num_likes)::double precision)) AS median,
+            avg(_likes_interactions_1.num_likes) AS average
+           FROM _likes_interactions _likes_interactions_1
+        ), _rank AS (
+         SELECT row_number() OVER (ORDER BY gt.v DESC) AS rank,
+            gt.i AS pid,
+            gt.v AS score,
+            profile.handle,
+            (CURRENT_DATE - date(profile.block_timestamp)) AS profile_age_in_days
+           FROM (public.globaltrust gt
+             JOIN public.profile ON (((gt.i)::text = (profile.profile_id)::text)))
+          WHERE (((gt.strategy_name)::text = 'engagement'::text) AND (gt.date = ( SELECT max(globaltrust.date) AS max
+                   FROM public.globaltrust
+                  WHERE ((globaltrust.strategy_name)::text = 'engagement'::text))))
+        )
+ SELECT _rank.pid,
+    _rank.handle,
+    _rank.rank,
+    _rank.score,
+    _rank.profile_age_in_days,
+    log((_rank.profile_age_in_days)::double precision) AS log_profile_age_in_days,
+    COALESCE(_posts_actions.num_posts, (0)::bigint) AS num_posts_actions,
+    COALESCE(_posts_actions_stats.median, ((0)::bigint)::double precision) AS median_posts_actions,
+    COALESCE(_posts_actions_stats.average, ((0)::bigint)::numeric) AS average_posts_actions,
+    COALESCE(_mirrors_actions.num_mirrors, (0)::bigint) AS num_mirrors_actions,
+    COALESCE(_mirrors_actions_stats.median, ((0)::bigint)::double precision) AS median_mirrors_actions,
+    COALESCE(_mirrors_actions_stats.average, ((0)::bigint)::numeric) AS average_mirrors_actions,
+    COALESCE(_comments_actions.num_comments, (0)::bigint) AS num_comments_actions,
+    COALESCE(_comments_actions_stats.median, ((0)::bigint)::double precision) AS median_comments_actions,
+    COALESCE(_comments_actions_stats.average, ((0)::bigint)::numeric) AS average_comments_actions,
+    COALESCE(_likes_actions.num_likes, (0)::bigint) AS num_likes_actions,
+    COALESCE(_likes_actions_stats.median, ((0)::bigint)::double precision) AS median_likes,
+    COALESCE(_likes_actions_stats.average, ((0)::bigint)::numeric) AS average_likes,
+    COALESCE(_mirrors_interactions.num_mirrors, (0)::bigint) AS num_mirrors_interactions,
+    COALESCE(_mirrors_interactions_stats.median, ((0)::bigint)::double precision) AS median_mirrors_interactions,
+    COALESCE(_mirrors_interactions_stats.average, ((0)::bigint)::numeric) AS average_mirrors_interactions,
+    COALESCE(_likes_interactions.num_likes, (0)::bigint) AS num_likes_interactions,
+    COALESCE(_likes_interactions_stats.median, ((0)::bigint)::double precision) AS median_likes_interactions,
+    COALESCE(_likes_interactions_stats.average, ((0)::bigint)::numeric) AS average_likes_interactions,
+    COALESCE(_comments_interactions.num_comments, (0)::bigint) AS num_comments_interactions,
+    COALESCE(_comments_interactions_stats.median, ((0)::bigint)::double precision) AS median_comments_interactions,
+    COALESCE(_comments_interactions_stats.average, ((0)::bigint)::numeric) AS average_comments_interactions,
+    COALESCE(_collects_interactions.num_collects, (0)::bigint) AS num_collects_interactions,
+    COALESCE(_collects_interactions_stats.median, ((0)::bigint)::double precision) AS median_collects_interactions,
+    COALESCE(_collects_interactions_stats.average, ((0)::bigint)::numeric) AS average_collects_interactions,
+    (((((COALESCE(_posts_actions.num_posts, (0)::bigint))::numeric / COALESCE(_posts_actions_stats.average, (1)::numeric)) + ((COALESCE(_mirrors_actions.num_mirrors, (0)::bigint))::numeric / COALESCE(_mirrors_actions_stats.average, (1)::numeric))) + ((COALESCE(_comments_actions.num_comments, (0)::bigint))::numeric / COALESCE(_comments_actions_stats.average, (1)::numeric))) + ((COALESCE(_likes_actions.num_likes, (0)::bigint))::numeric / COALESCE(_likes_actions_stats.average, (1)::numeric))) AS action_score,
+    (((((COALESCE(_mirrors_interactions.num_mirrors, (0)::bigint))::numeric / COALESCE(_mirrors_interactions_stats.average, (1)::numeric)) + ((COALESCE(_likes_interactions.num_likes, (0)::bigint))::numeric / COALESCE(_likes_interactions_stats.average, (1)::numeric))) + ((COALESCE(_comments_interactions.num_comments, (0)::bigint))::numeric / COALESCE(_comments_interactions_stats.average, (1)::numeric))) + ((COALESCE(_collects_interactions.num_collects, (0)::bigint))::numeric / COALESCE(_collects_interactions_stats.average, (1)::numeric))) AS interaction_score
+   FROM ((((((((((((((((_rank
+     LEFT JOIN _posts_actions ON (((_rank.pid)::text = (_posts_actions.pid)::text)))
+     LEFT JOIN _posts_actions_stats ON (true))
+     LEFT JOIN _mirrors_actions ON (((_rank.pid)::text = (_mirrors_actions.pid)::text)))
+     LEFT JOIN _mirrors_actions_stats ON (true))
+     LEFT JOIN _mirrors_interactions ON (((_rank.pid)::text = _mirrors_interactions.pid)))
+     LEFT JOIN _mirrors_interactions_stats ON (true))
+     LEFT JOIN _likes_actions ON (((_rank.pid)::text = (_likes_actions.pid)::text)))
+     LEFT JOIN _likes_actions_stats ON (true))
+     LEFT JOIN _likes_interactions ON (((_rank.pid)::text = _likes_interactions.pid)))
+     LEFT JOIN _likes_interactions_stats ON (true))
+     LEFT JOIN _comments_actions ON (((_rank.pid)::text = (_comments_actions.pid)::text)))
+     LEFT JOIN _comments_actions_stats ON (true))
+     LEFT JOIN _comments_interactions ON (((_rank.pid)::text = _comments_interactions.pid)))
+     LEFT JOIN _comments_interactions_stats ON (true))
+     LEFT JOIN _collects_interactions ON (((_rank.pid)::text = _collects_interactions.pid)))
+     LEFT JOIN _collects_interactions_stats ON (true))
+  WITH NO DATA;
+
+
+ALTER TABLE public.k3l_interactions OWNER TO postgres;
+
+--
+-- Name: k3l_rank; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.k3l_rank AS
+ SELECT row_number() OVER () AS pseudo_id,
+    row_number() OVER (PARTITION BY globaltrust.date, globaltrust.strategy_name ORDER BY globaltrust.v DESC) AS rank,
+    globaltrust.i AS profile_id,
+    globaltrust.strategy_name,
+    globaltrust.date
+   FROM public.globaltrust
+  WITH NO DATA;
+
+
+ALTER TABLE public.k3l_rank OWNER TO postgres;
+
+--
 -- Name: knex_migrations; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -828,25 +1030,6 @@ CREATE TABLE public.publication_collect_module_multirecipient_details (
 
 
 ALTER TABLE public.publication_collect_module_multirecipient_details OWNER TO postgres;
-
---
--- Name: publication_reaction_records; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.publication_reaction_records (
-    publication_id character varying(133),
-    reaction character varying(300),
-    actioned_by_profile_id character varying(66),
-    action_at timestamp with time zone,
-    undone_on timestamp with time zone,
-    has_undone boolean,
-    record_id character varying NOT NULL,
-    uuid character varying,
-    source_timestamp bigint
-);
-
-
-ALTER TABLE public.publication_reaction_records OWNER TO postgres;
 
 --
 -- Name: raw_gt; Type: TABLE; Schema: public; Owner: postgres
@@ -1181,6 +1364,27 @@ CREATE INDEX k3l_mirrors_profile_id_idx ON public.k3l_mirrors USING btree (profi
 --
 
 CREATE INDEX k3l_mirrors_to_profile_id_idx ON public.k3l_mirrors USING btree (to_profile_id);
+
+
+--
+-- Name: k3l_rank_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX k3l_rank_idx ON public.k3l_rank USING btree (pseudo_id);
+
+
+--
+-- Name: k3l_upvotes_profile_id_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX k3l_upvotes_profile_id_idx ON public.k3l_upvotes USING btree (profile_id);
+
+
+--
+-- Name: k3l_upvotes_to_profile_id_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX k3l_upvotes_to_profile_id_idx ON public.k3l_upvotes USING btree (to_profile_id);
 
 
 --
