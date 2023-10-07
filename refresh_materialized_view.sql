@@ -7,3 +7,4 @@ refresh materialized view k3l_collect_nft;
 refresh materialized view k3l_follow_counts;
 refresh materialized view concurrently k3l_feed;
 refresh materialized view concurrently k3l_following_feed;
+refresh materialized view concurrently k3l_rank;
