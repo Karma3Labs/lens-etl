@@ -736,7 +736,8 @@ ALTER TABLE public.publication_reaction_records OWNER TO postgres;
 CREATE MATERIALIZED VIEW public.k3l_upvotes AS
  SELECT publication_reaction_records.publication_id AS pub_id,
     publication_reaction_records.actioned_by_profile_id AS profile_id,
-    "substring"((publication_reaction_records.publication_id)::text, 1, (POSITION(('-'::text) IN (publication_reaction_records.publication_id)) - 1)) AS to_profile_id
+    "substring"((publication_reaction_records.publication_id)::text, 1, (POSITION(('-'::text) IN (publication_reaction_records.publication_id)) - 1)) AS to_profile_id,
+    publication_reaction_records.action_at AS created_at
    FROM public.publication_reaction_records
   WHERE (((publication_reaction_records.reaction)::text = 'UPVOTE'::text) AND (publication_reaction_records.has_undone IS FALSE))
   WITH NO DATA;
@@ -751,7 +752,8 @@ ALTER TABLE public.k3l_upvotes OWNER TO postgres;
 CREATE MATERIALIZED VIEW public.k3l_interactions AS
  WITH _posts_actions AS (
          SELECT k3l_posts.profile_id AS pid,
-            count(1) AS num_posts
+            count(1) AS num_posts,
+            max(k3l_posts.created_at) AS last_actions_date
            FROM public.k3l_posts
           GROUP BY k3l_posts.profile_id
         ), _posts_actions_stats AS (
@@ -760,7 +762,8 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
            FROM _posts_actions _posts_actions_1
         ), _mirrors_actions AS (
          SELECT k3l_mirrors.profile_id AS pid,
-            count(1) AS num_mirrors
+            count(1) AS num_mirrors,
+            max(k3l_mirrors.created_at) AS last_actions_date
            FROM public.k3l_mirrors
           GROUP BY k3l_mirrors.profile_id
         ), _mirrors_actions_stats AS (
@@ -769,7 +772,8 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
            FROM _mirrors_actions _mirrors_actions_1
         ), _mirrors_interactions AS (
          SELECT k3l_mirrors.to_profile_id AS pid,
-            count(1) AS num_mirrors
+            count(1) AS num_mirrors,
+            max(k3l_mirrors.created_at) AS last_interactions_date
            FROM public.k3l_mirrors
           GROUP BY k3l_mirrors.to_profile_id
         ), _mirrors_interactions_stats AS (
@@ -778,16 +782,18 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
            FROM _mirrors_interactions _mirrors_interactions_1
         ), _collects_actions AS (
          SELECT k3l_collect_nft.profile_id AS pid,
-            count(1) AS num_collects
+            count(1) AS num_collects,
+            max(k3l_collect_nft.created_at) AS last_actions_date
            FROM public.k3l_collect_nft
           GROUP BY k3l_collect_nft.profile_id
         ), _collects_actions_stats AS (
-         SELECT percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((_collects_actions.num_collects)::double precision)) AS median,
-            avg(_collects_actions.num_collects) AS average
-           FROM _collects_actions
+         SELECT percentile_cont((0.5)::double precision) WITHIN GROUP (ORDER BY ((_collects_actions_1.num_collects)::double precision)) AS median,
+            avg(_collects_actions_1.num_collects) AS average
+           FROM _collects_actions _collects_actions_1
         ), _collects_interactions AS (
          SELECT k3l_collect_nft.to_profile_id AS pid,
-            count(1) AS num_collects
+            count(1) AS num_collects,
+            max(k3l_collect_nft.created_at) AS last_interactions_date
            FROM public.k3l_collect_nft
           GROUP BY k3l_collect_nft.to_profile_id
         ), _collects_interactions_stats AS (
@@ -796,7 +802,8 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
            FROM _collects_interactions _collects_interactions_1
         ), _comments_actions AS (
          SELECT k3l_comments.profile_id AS pid,
-            count(1) AS num_comments
+            count(1) AS num_comments,
+            max(k3l_comments.created_at) AS last_actions_date
            FROM public.k3l_comments
           GROUP BY k3l_comments.profile_id
         ), _comments_actions_stats AS (
@@ -805,7 +812,8 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
            FROM _comments_actions _comments_actions_1
         ), _comments_interactions AS (
          SELECT k3l_comments.to_profile_id AS pid,
-            count(1) AS num_comments
+            count(1) AS num_comments,
+            max(k3l_comments.created_at) AS last_interactions_date
            FROM public.k3l_comments
           GROUP BY k3l_comments.to_profile_id
         ), _comments_interactions_stats AS (
@@ -814,7 +822,8 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
            FROM _comments_interactions _comments_interactions_1
         ), _likes_actions AS (
          SELECT k3l_upvotes.profile_id AS pid,
-            count(1) AS num_likes
+            count(1) AS num_likes,
+            max(k3l_upvotes.created_at) AS last_actions_date
            FROM public.k3l_upvotes
           GROUP BY k3l_upvotes.profile_id
         ), _likes_actions_stats AS (
@@ -823,7 +832,8 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
            FROM _likes_actions _likes_actions_1
         ), _likes_interactions AS (
          SELECT k3l_upvotes.to_profile_id AS pid,
-            count(1) AS num_likes
+            count(1) AS num_likes,
+            max(k3l_upvotes.created_at) AS last_interactions_date
            FROM public.k3l_upvotes
           GROUP BY k3l_upvotes.to_profile_id
         ), _likes_interactions_stats AS (
@@ -847,7 +857,10 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
     _rank.rank,
     _rank.score,
     _rank.profile_age_in_days,
-    log((_rank.profile_age_in_days)::double precision) AS log_profile_age_in_days,
+    ((((((COALESCE(_posts_actions.num_posts, (0)::bigint))::numeric / COALESCE(_posts_actions_stats.average, (1)::numeric)) + ((COALESCE(_mirrors_actions.num_mirrors, (0)::bigint))::numeric / COALESCE(_mirrors_actions_stats.average, (1)::numeric))) + ((COALESCE(_comments_actions.num_comments, (0)::bigint))::numeric / COALESCE(_comments_actions_stats.average, (1)::numeric))) + ((COALESCE(_likes_actions.num_likes, (0)::bigint))::numeric / COALESCE(_likes_actions_stats.average, (1)::numeric))) + ((COALESCE(_collects_actions.num_collects, (0)::bigint))::numeric / COALESCE(_collects_actions_stats.average, (1)::numeric))) AS action_score,
+    (((((COALESCE(_mirrors_interactions.num_mirrors, (0)::bigint))::numeric / COALESCE(_mirrors_interactions_stats.average, (1)::numeric)) + ((COALESCE(_likes_interactions.num_likes, (0)::bigint))::numeric / COALESCE(_likes_interactions_stats.average, (1)::numeric))) + ((COALESCE(_comments_interactions.num_comments, (0)::bigint))::numeric / COALESCE(_comments_interactions_stats.average, (1)::numeric))) + ((COALESCE(_collects_interactions.num_collects, (0)::bigint))::numeric / COALESCE(_collects_interactions_stats.average, (1)::numeric))) AS interaction_score,
+    GREATEST(_posts_actions.last_actions_date, _mirrors_actions.last_actions_date, _comments_actions.last_actions_date, _likes_actions.last_actions_date, _collects_actions.last_actions_date) AS last_actions_date,
+    GREATEST(_mirrors_interactions.last_interactions_date, _likes_interactions.last_interactions_date, _comments_interactions.last_interactions_date, _collects_interactions.last_interactions_date) AS last_interactions_date,
     COALESCE(_posts_actions.num_posts, (0)::bigint) AS num_posts_actions,
     COALESCE(_posts_actions_stats.median, ((0)::bigint)::double precision) AS median_posts_actions,
     COALESCE(_posts_actions_stats.average, ((0)::bigint)::numeric) AS average_posts_actions,
@@ -860,6 +873,9 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
     COALESCE(_likes_actions.num_likes, (0)::bigint) AS num_likes_actions,
     COALESCE(_likes_actions_stats.median, ((0)::bigint)::double precision) AS median_likes,
     COALESCE(_likes_actions_stats.average, ((0)::bigint)::numeric) AS average_likes,
+    COALESCE(_collects_actions.num_collects, (0)::bigint) AS num_collects_actions,
+    COALESCE(_collects_actions_stats.median, ((0)::bigint)::double precision) AS median_collects,
+    COALESCE(_collects_actions_stats.average, ((0)::bigint)::numeric) AS average_collects,
     COALESCE(_mirrors_interactions.num_mirrors, (0)::bigint) AS num_mirrors_interactions,
     COALESCE(_mirrors_interactions_stats.median, ((0)::bigint)::double precision) AS median_mirrors_interactions,
     COALESCE(_mirrors_interactions_stats.average, ((0)::bigint)::numeric) AS average_mirrors_interactions,
@@ -871,10 +887,8 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
     COALESCE(_comments_interactions_stats.average, ((0)::bigint)::numeric) AS average_comments_interactions,
     COALESCE(_collects_interactions.num_collects, (0)::bigint) AS num_collects_interactions,
     COALESCE(_collects_interactions_stats.median, ((0)::bigint)::double precision) AS median_collects_interactions,
-    COALESCE(_collects_interactions_stats.average, ((0)::bigint)::numeric) AS average_collects_interactions,
-    (((((COALESCE(_posts_actions.num_posts, (0)::bigint))::numeric / COALESCE(_posts_actions_stats.average, (1)::numeric)) + ((COALESCE(_mirrors_actions.num_mirrors, (0)::bigint))::numeric / COALESCE(_mirrors_actions_stats.average, (1)::numeric))) + ((COALESCE(_comments_actions.num_comments, (0)::bigint))::numeric / COALESCE(_comments_actions_stats.average, (1)::numeric))) + ((COALESCE(_likes_actions.num_likes, (0)::bigint))::numeric / COALESCE(_likes_actions_stats.average, (1)::numeric))) AS action_score,
-    (((((COALESCE(_mirrors_interactions.num_mirrors, (0)::bigint))::numeric / COALESCE(_mirrors_interactions_stats.average, (1)::numeric)) + ((COALESCE(_likes_interactions.num_likes, (0)::bigint))::numeric / COALESCE(_likes_interactions_stats.average, (1)::numeric))) + ((COALESCE(_comments_interactions.num_comments, (0)::bigint))::numeric / COALESCE(_comments_interactions_stats.average, (1)::numeric))) + ((COALESCE(_collects_interactions.num_collects, (0)::bigint))::numeric / COALESCE(_collects_interactions_stats.average, (1)::numeric))) AS interaction_score
-   FROM ((((((((((((((((_rank
+    COALESCE(_collects_interactions_stats.average, ((0)::bigint)::numeric) AS average_collects_interactions
+   FROM ((((((((((((((((((_rank
      LEFT JOIN _posts_actions ON (((_rank.pid)::text = (_posts_actions.pid)::text)))
      LEFT JOIN _posts_actions_stats ON (true))
      LEFT JOIN _mirrors_actions ON (((_rank.pid)::text = (_mirrors_actions.pid)::text)))
@@ -883,6 +897,8 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
      LEFT JOIN _mirrors_interactions_stats ON (true))
      LEFT JOIN _likes_actions ON (((_rank.pid)::text = (_likes_actions.pid)::text)))
      LEFT JOIN _likes_actions_stats ON (true))
+     LEFT JOIN _collects_actions ON (((_rank.pid)::text = (_collects_actions.pid)::text)))
+     LEFT JOIN _collects_actions_stats ON (true))
      LEFT JOIN _likes_interactions ON (((_rank.pid)::text = _likes_interactions.pid)))
      LEFT JOIN _likes_interactions_stats ON (true))
      LEFT JOIN _comments_actions ON (((_rank.pid)::text = (_comments_actions.pid)::text)))
