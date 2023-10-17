@@ -66,6 +66,21 @@ CREATE TABLE public.globaltrust (
 ALTER TABLE public.globaltrust OWNER TO postgres;
 
 --
+-- Name: globaltrust_config; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.globaltrust_config (
+    strategy_name character varying(255) NOT NULL,
+    pretrust text,
+    localtrust text,
+    alpha real,
+    date date DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public.globaltrust_config OWNER TO postgres;
+
+--
 -- Name: hna_gt; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1129,6 +1144,14 @@ ALTER TABLE ONLY public.strategies ALTER COLUMN id SET DEFAULT nextval('public.s
 
 ALTER TABLE ONLY public.follower
     ADD CONSTRAINT follower_new_pkey PRIMARY KEY (address, follow_profile_id);
+
+
+--
+-- Name: globaltrust_config globaltrust_config_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.globaltrust_config
+    ADD CONSTRAINT globaltrust_config_pkey PRIMARY KEY (strategy_name, date);
 
 
 --
