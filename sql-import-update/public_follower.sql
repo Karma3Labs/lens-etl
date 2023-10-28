@@ -7,16 +7,17 @@ EXPORT DATA
     field_delimiter = ',')
 AS (
   SELECT 
-    address, 
-    follow_profile_id, 
-    block_timestamp, 
-    created_block_hash,
-    is_finalised_on_chain, 
-    optimistic_id, 
-    datastream_metadata.uuid, 
-    datastream_metadata.source_timestamp 
+    pr.owned_by AS address, 
+    pf.profile_follower_id AS follow_profile_id, 
+    pf.block_timestamp, 
+    pf.block_hash AS created_block_hash,
+    true AS is_finalised_on_chain, 
+    NULL as optimistic_id, 
+    pf.datastream_metadata.uuid, 
+    pf.datastream_metadata.source_timestamp 
   FROM
-    public_follower
+    profile_follower AS pf
+    JOIN profile_record AS pr ON pf.profile_id = pr.profile_id
   ORDER BY
     block_timestamp DESC
 );
