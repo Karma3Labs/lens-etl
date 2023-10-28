@@ -16,7 +16,7 @@ AS (
     datastream_metadata.uuid, 
     datastream_metadata.source_timestamp 
   FROM
-    public_profile_stats
+    global_stats_profile
   ORDER BY
     profile_id
 );
