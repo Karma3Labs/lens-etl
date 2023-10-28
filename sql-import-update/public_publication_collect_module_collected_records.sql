@@ -8,20 +8,18 @@ EXPORT DATA
 AS (
   SELECT 
     publication_id,
-    collected_by,
-    referral_id,
-    collect_publication_nft_id,
+    owner_address as collected_by,
+    -- referral_id,
+    token_id as collect_publication_nft_id,
     block_timestamp,
-    created_block_hash,
-    record_id,
-    is_finalised_on_chain,
-    optimistic_id,
+    block_hash as created_block_hash,
+    publication_id || '-' || token_id as record_id,
+    -- is_finalised_on_chain,
+    -- optimistic_id,
     datastream_metadata.uuid, 
     datastream_metadata.source_timestamp 
   FROM
-    public_publication_collect_module_collected_records
-  WHERE
-    block_timestamp > 'BLOCK_TIMESTAMP'
+    publication_open_action_module_collect_nft_ownership
   ORDER BY
-    block_timestamp DESC
+    record_id
 );
