@@ -11,6 +11,7 @@ SQL_TEMPLATE=sql-import-full
 EXPORT_DIR=buckets-full
 LOG_DIR=${LOG_DIR:-"/var/log/lens-etl"}
 LOG=${LOG_DIR}/$(basename "$0").log
+BQ_DATASET=${BQ_DATASET:-lens-public-data:polygon}
 
 # Remove the comment below to debug
 set -x
@@ -39,7 +40,7 @@ log "Run the queries in BigQuery to export data into Google Cloud Storage"
 for sqlfile in ${WORK_DIR}/${SQL_TEMPLATE}/*; do
   log "Running $sqlfile"
   sed "s/GCS_BUCKET_NAME/${GCS_BUCKET_NAME}/g" $sqlfile > $sqlfile-${JOBTIME}
-  /usr/bin/bq query --apilog stdout --use_legacy_sql=false --dataset_id lens-public-data:polygon "$(cat $sqlfile-${JOBTIME})" >> $LOG 2>&1
+  /usr/bin/bq query --apilog stdout --use_legacy_sql=false --dataset_id "${BQ_DATASET}" "$(cat $sqlfile-${JOBTIME})" >> $LOG 2>&1
   rm $sqlfile-${JOBTIME}
 done
 

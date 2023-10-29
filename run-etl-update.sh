@@ -13,6 +13,7 @@ SQL_UPSERT=sql-upsert
 EXPORT_DIR=buckets-update
 LOG_DIR=${LOG_DIR:-"/var/log/lens-etl"}
 LOG=${LOG_DIR}/$(basename "$0").log
+BQ_DATASET=${BQ_DATASET:-lens-public-data:polygon}
 
 # Remove the comment below to debug
 set -x
@@ -82,7 +83,7 @@ for sql_template in ${WORK_DIR}/${SQL_TEMPLATE}/*; do
   fi
 
   log "Running $working_sql"
-  /usr/bin/bq query --apilog stdout --use_legacy_sql=false --dataset_id lens-public-data:polygon "$(cat $working_sql)" >> $LOG 2>&1
+  /usr/bin/bq query --apilog stdout --use_legacy_sql=false --dataset_id "${BQ_DATASET}" "$(cat $working_sql)" >> $LOG 2>&1
 done
 
 log "Remove folders in local drive and downloading CSV files from GCS "
