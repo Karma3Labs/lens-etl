@@ -3,7 +3,9 @@
 --
 
 -- Dumped from database version 15.4 (Debian 15.4-2.pgdg120+1)
--- Dumped by pg_dump version 15.4
+-- Dumped by pg_dump version 16.0
+
+-- Started on 2023-10-28 19:51:10 PDT
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -16,11 +18,31 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- TOC entry 4 (class 2615 OID 2200)
+-- Name: public; Type: SCHEMA; Schema: -; Owner: pg_database_owner
+--
+
+CREATE SCHEMA public;
+
+
+ALTER SCHEMA public OWNER TO pg_database_owner;
+
+--
+-- TOC entry 3637 (class 0 OID 0)
+-- Dependencies: 4
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
+--
+
+COMMENT ON SCHEMA public IS 'standard public schema';
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
+-- TOC entry 291 (class 1259 OID 432633)
 -- Name: feed; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -34,6 +56,7 @@ CREATE TABLE public.feed (
 ALTER TABLE public.feed OWNER TO postgres;
 
 --
+-- TOC entry 272 (class 1259 OID 183754)
 -- Name: follower; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -52,6 +75,7 @@ CREATE TABLE public.follower (
 ALTER TABLE public.follower OWNER TO postgres;
 
 --
+-- TOC entry 283 (class 1259 OID 342897)
 -- Name: globaltrust; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -66,6 +90,7 @@ CREATE TABLE public.globaltrust (
 ALTER TABLE public.globaltrust OWNER TO postgres;
 
 --
+-- TOC entry 313 (class 1259 OID 4751540)
 -- Name: globaltrust_config; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -81,6 +106,7 @@ CREATE TABLE public.globaltrust_config (
 ALTER TABLE public.globaltrust_config OWNER TO postgres;
 
 --
+-- TOC entry 297 (class 1259 OID 780258)
 -- Name: hna_gt; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -94,6 +120,7 @@ CREATE TABLE public.hna_gt (
 ALTER TABLE public.hna_gt OWNER TO postgres;
 
 --
+-- TOC entry 293 (class 1259 OID 780234)
 -- Name: hna_ids; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -106,6 +133,7 @@ CREATE TABLE public.hna_ids (
 ALTER TABLE public.hna_ids OWNER TO postgres;
 
 --
+-- TOC entry 301 (class 1259 OID 1168195)
 -- Name: hna_indices; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -118,6 +146,7 @@ CREATE TABLE public.hna_indices (
 ALTER TABLE public.hna_indices OWNER TO postgres;
 
 --
+-- TOC entry 300 (class 1259 OID 1168194)
 -- Name: hna_indices_index_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -129,9 +158,11 @@ CREATE SEQUENCE public.hna_indices_index_seq
     CACHE 1;
 
 
-ALTER TABLE public.hna_indices_index_seq OWNER TO postgres;
+ALTER SEQUENCE public.hna_indices_index_seq OWNER TO postgres;
 
 --
+-- TOC entry 3638 (class 0 OID 0)
+-- Dependencies: 300
 -- Name: hna_indices_index_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -139,6 +170,7 @@ ALTER SEQUENCE public.hna_indices_index_seq OWNED BY public.hna_indices.index;
 
 
 --
+-- TOC entry 270 (class 1259 OID 171356)
 -- Name: post_comment; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -181,6 +213,7 @@ CREATE TABLE public.post_comment (
 ALTER TABLE public.post_comment OWNER TO postgres;
 
 --
+-- TOC entry 269 (class 1259 OID 159816)
 -- Name: profile_post; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -223,6 +256,7 @@ CREATE TABLE public.profile_post (
 ALTER TABLE public.profile_post OWNER TO postgres;
 
 --
+-- TOC entry 302 (class 1259 OID 1195869)
 -- Name: hna_lt_components; Type: VIEW; Schema: public; Owner: postgres
 --
 
@@ -265,9 +299,10 @@ UNION
   WHERE (p.is_related_to_comment IS NOT NULL);
 
 
-ALTER TABLE public.hna_lt_components OWNER TO postgres;
+ALTER VIEW public.hna_lt_components OWNER TO postgres;
 
 --
+-- TOC entry 303 (class 1259 OID 1195874)
 -- Name: hna_lt_weights; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -281,6 +316,7 @@ CREATE TABLE public.hna_lt_weights (
 ALTER TABLE public.hna_lt_weights OWNER TO postgres;
 
 --
+-- TOC entry 304 (class 1259 OID 1195881)
 -- Name: hna_lt_weighted_components; Type: VIEW; Schema: public; Owner: postgres
 --
 
@@ -294,9 +330,10 @@ CREATE VIEW public.hna_lt_weighted_components AS
      JOIN public.hna_lt_weights USING (kind));
 
 
-ALTER TABLE public.hna_lt_weighted_components OWNER TO postgres;
+ALTER VIEW public.hna_lt_weighted_components OWNER TO postgres;
 
 --
+-- TOC entry 305 (class 1259 OID 1195885)
 -- Name: hna_lt; Type: VIEW; Schema: public; Owner: postgres
 --
 
@@ -311,9 +348,10 @@ CREATE VIEW public.hna_lt AS
   GROUP BY c.strategy, "from".index, "to".index;
 
 
-ALTER TABLE public.hna_lt OWNER TO postgres;
+ALTER VIEW public.hna_lt OWNER TO postgres;
 
 --
+-- TOC entry 294 (class 1259 OID 780243)
 -- Name: hna_lt_old; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -327,6 +365,7 @@ CREATE TABLE public.hna_lt_old (
 ALTER TABLE public.hna_lt_old OWNER TO postgres;
 
 --
+-- TOC entry 296 (class 1259 OID 780253)
 -- Name: hna_params; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -340,6 +379,7 @@ CREATE TABLE public.hna_params (
 ALTER TABLE public.hna_params OWNER TO postgres;
 
 --
+-- TOC entry 295 (class 1259 OID 780248)
 -- Name: hna_pt; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -352,6 +392,7 @@ CREATE TABLE public.hna_pt (
 ALTER TABLE public.hna_pt OWNER TO postgres;
 
 --
+-- TOC entry 268 (class 1259 OID 19506)
 -- Name: profile; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -390,6 +431,7 @@ CREATE TABLE public.profile (
 ALTER TABLE public.profile OWNER TO postgres;
 
 --
+-- TOC entry 271 (class 1259 OID 183507)
 -- Name: publication_collect_module_collected_records; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -411,6 +453,7 @@ CREATE TABLE public.publication_collect_module_collected_records (
 ALTER TABLE public.publication_collect_module_collected_records OWNER TO postgres;
 
 --
+-- TOC entry 280 (class 1259 OID 196057)
 -- Name: publication_collect_module_details; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -436,6 +479,7 @@ CREATE TABLE public.publication_collect_module_details (
 ALTER TABLE public.publication_collect_module_details OWNER TO postgres;
 
 --
+-- TOC entry 292 (class 1259 OID 619141)
 -- Name: k3l_collect_nft; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -472,9 +516,10 @@ CREATE MATERIALIZED VIEW public.k3l_collect_nft AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_collect_nft OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_collect_nft OWNER TO postgres;
 
 --
+-- TOC entry 290 (class 1259 OID 390110)
 -- Name: k3l_comments; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -490,9 +535,10 @@ CREATE MATERIALIZED VIEW public.k3l_comments AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_comments OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_comments OWNER TO postgres;
 
 --
+-- TOC entry 306 (class 1259 OID 2843978)
 -- Name: profile_curated; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -507,6 +553,7 @@ CREATE TABLE public.profile_curated (
 ALTER TABLE public.profile_curated OWNER TO postgres;
 
 --
+-- TOC entry 307 (class 1259 OID 2975555)
 -- Name: k3l_curated_profiles; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -521,9 +568,10 @@ CREATE MATERIALIZED VIEW public.k3l_curated_profiles AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_curated_profiles OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_curated_profiles OWNER TO postgres;
 
 --
+-- TOC entry 288 (class 1259 OID 390086)
 -- Name: k3l_posts; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -537,9 +585,10 @@ CREATE MATERIALIZED VIEW public.k3l_posts AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_posts OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_posts OWNER TO postgres;
 
 --
+-- TOC entry 289 (class 1259 OID 390092)
 -- Name: k3l_profiles; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -553,9 +602,10 @@ CREATE MATERIALIZED VIEW public.k3l_profiles AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_profiles OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_profiles OWNER TO postgres;
 
 --
+-- TOC entry 282 (class 1259 OID 196072)
 -- Name: publication_stats; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -574,6 +624,7 @@ CREATE TABLE public.publication_stats (
 ALTER TABLE public.publication_stats OWNER TO postgres;
 
 --
+-- TOC entry 308 (class 1259 OID 3039646)
 -- Name: k3l_feed; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -607,9 +658,10 @@ CREATE MATERIALIZED VIEW public.k3l_feed AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_feed OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_feed OWNER TO postgres;
 
 --
+-- TOC entry 299 (class 1259 OID 945241)
 -- Name: k3l_follow_counts; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -621,9 +673,10 @@ CREATE MATERIALIZED VIEW public.k3l_follow_counts AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_follow_counts OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_follow_counts OWNER TO postgres;
 
 --
+-- TOC entry 309 (class 1259 OID 3069472)
 -- Name: k3l_following_feed; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -685,9 +738,10 @@ CREATE MATERIALIZED VIEW public.k3l_following_feed AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_following_feed OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_following_feed OWNER TO postgres;
 
 --
+-- TOC entry 286 (class 1259 OID 390069)
 -- Name: k3l_follows; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -700,9 +754,10 @@ CREATE MATERIALIZED VIEW public.k3l_follows AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_follows OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_follows OWNER TO postgres;
 
 --
+-- TOC entry 287 (class 1259 OID 390079)
 -- Name: k3l_mirrors; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -723,9 +778,10 @@ CREATE MATERIALIZED VIEW public.k3l_mirrors AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_mirrors OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_mirrors OWNER TO postgres;
 
 --
+-- TOC entry 285 (class 1259 OID 365147)
 -- Name: publication_reaction_records; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -745,6 +801,7 @@ CREATE TABLE public.publication_reaction_records (
 ALTER TABLE public.publication_reaction_records OWNER TO postgres;
 
 --
+-- TOC entry 311 (class 1259 OID 4430033)
 -- Name: k3l_upvotes; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -758,9 +815,10 @@ CREATE MATERIALIZED VIEW public.k3l_upvotes AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_upvotes OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_upvotes OWNER TO postgres;
 
 --
+-- TOC entry 312 (class 1259 OID 4430060)
 -- Name: k3l_interactions; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -925,9 +983,10 @@ CREATE MATERIALIZED VIEW public.k3l_interactions AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_interactions OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_interactions OWNER TO postgres;
 
 --
+-- TOC entry 310 (class 1259 OID 4429868)
 -- Name: k3l_rank; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
 --
 
@@ -941,9 +1000,10 @@ CREATE MATERIALIZED VIEW public.k3l_rank AS
   WITH NO DATA;
 
 
-ALTER TABLE public.k3l_rank OWNER TO postgres;
+ALTER MATERIALIZED VIEW public.k3l_rank OWNER TO postgres;
 
 --
+-- TOC entry 274 (class 1259 OID 195640)
 -- Name: knex_migrations; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -958,6 +1018,7 @@ CREATE TABLE public.knex_migrations (
 ALTER TABLE public.knex_migrations OWNER TO postgres;
 
 --
+-- TOC entry 273 (class 1259 OID 195639)
 -- Name: knex_migrations_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -970,9 +1031,11 @@ CREATE SEQUENCE public.knex_migrations_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.knex_migrations_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.knex_migrations_id_seq OWNER TO postgres;
 
 --
+-- TOC entry 3639 (class 0 OID 0)
+-- Dependencies: 273
 -- Name: knex_migrations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -980,6 +1043,7 @@ ALTER SEQUENCE public.knex_migrations_id_seq OWNED BY public.knex_migrations.id;
 
 
 --
+-- TOC entry 276 (class 1259 OID 195647)
 -- Name: knex_migrations_lock; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -992,6 +1056,7 @@ CREATE TABLE public.knex_migrations_lock (
 ALTER TABLE public.knex_migrations_lock OWNER TO postgres;
 
 --
+-- TOC entry 275 (class 1259 OID 195646)
 -- Name: knex_migrations_lock_index_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1004,9 +1069,11 @@ CREATE SEQUENCE public.knex_migrations_lock_index_seq
     CACHE 1;
 
 
-ALTER TABLE public.knex_migrations_lock_index_seq OWNER TO postgres;
+ALTER SEQUENCE public.knex_migrations_lock_index_seq OWNER TO postgres;
 
 --
+-- TOC entry 3640 (class 0 OID 0)
+-- Dependencies: 275
 -- Name: knex_migrations_lock_index_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -1014,6 +1081,7 @@ ALTER SEQUENCE public.knex_migrations_lock_index_seq OWNED BY public.knex_migrat
 
 
 --
+-- TOC entry 284 (class 1259 OID 342906)
 -- Name: localtrust; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1029,6 +1097,7 @@ CREATE TABLE public.localtrust (
 ALTER TABLE public.localtrust OWNER TO postgres;
 
 --
+-- TOC entry 279 (class 1259 OID 196050)
 -- Name: profile_stats; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1047,6 +1116,7 @@ CREATE TABLE public.profile_stats (
 ALTER TABLE public.profile_stats OWNER TO postgres;
 
 --
+-- TOC entry 281 (class 1259 OID 196065)
 -- Name: publication_collect_module_multirecipient_details; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1063,6 +1133,7 @@ CREATE TABLE public.publication_collect_module_multirecipient_details (
 ALTER TABLE public.publication_collect_module_multirecipient_details OWNER TO postgres;
 
 --
+-- TOC entry 298 (class 1259 OID 780268)
 -- Name: raw_gt; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1075,6 +1146,7 @@ CREATE TABLE public.raw_gt (
 ALTER TABLE public.raw_gt OWNER TO postgres;
 
 --
+-- TOC entry 278 (class 1259 OID 195902)
 -- Name: strategies; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1089,6 +1161,7 @@ CREATE TABLE public.strategies (
 ALTER TABLE public.strategies OWNER TO postgres;
 
 --
+-- TOC entry 277 (class 1259 OID 195901)
 -- Name: strategies_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1101,9 +1174,11 @@ CREATE SEQUENCE public.strategies_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.strategies_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.strategies_id_seq OWNER TO postgres;
 
 --
+-- TOC entry 3641 (class 0 OID 0)
+-- Dependencies: 277
 -- Name: strategies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -1111,6 +1186,7 @@ ALTER SEQUENCE public.strategies_id_seq OWNED BY public.strategies.id;
 
 
 --
+-- TOC entry 3402 (class 2604 OID 1168198)
 -- Name: hna_indices index; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1118,6 +1194,7 @@ ALTER TABLE ONLY public.hna_indices ALTER COLUMN index SET DEFAULT nextval('publ
 
 
 --
+-- TOC entry 3397 (class 2604 OID 195643)
 -- Name: knex_migrations id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1125,6 +1202,7 @@ ALTER TABLE ONLY public.knex_migrations ALTER COLUMN id SET DEFAULT nextval('pub
 
 
 --
+-- TOC entry 3398 (class 2604 OID 195650)
 -- Name: knex_migrations_lock index; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1132,6 +1210,7 @@ ALTER TABLE ONLY public.knex_migrations_lock ALTER COLUMN index SET DEFAULT next
 
 
 --
+-- TOC entry 3399 (class 2604 OID 195905)
 -- Name: strategies id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1139,6 +1218,7 @@ ALTER TABLE ONLY public.strategies ALTER COLUMN id SET DEFAULT nextval('public.s
 
 
 --
+-- TOC entry 3420 (class 2606 OID 183760)
 -- Name: follower follower_new_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1147,6 +1227,7 @@ ALTER TABLE ONLY public.follower
 
 
 --
+-- TOC entry 3472 (class 2606 OID 4751554)
 -- Name: globaltrust_config globaltrust_config_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1155,6 +1236,7 @@ ALTER TABLE ONLY public.globaltrust_config
 
 
 --
+-- TOC entry 3441 (class 2606 OID 342905)
 -- Name: globaltrust globaltrust_strategy_name_date_i_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1163,6 +1245,7 @@ ALTER TABLE ONLY public.globaltrust
 
 
 --
+-- TOC entry 3453 (class 2606 OID 780242)
 -- Name: hna_ids hna_ids_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1171,6 +1254,7 @@ ALTER TABLE ONLY public.hna_ids
 
 
 --
+-- TOC entry 3455 (class 2606 OID 780240)
 -- Name: hna_ids hna_ids_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1179,6 +1263,7 @@ ALTER TABLE ONLY public.hna_ids
 
 
 --
+-- TOC entry 3461 (class 2606 OID 1168202)
 -- Name: hna_indices hna_indices_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1187,6 +1272,7 @@ ALTER TABLE ONLY public.hna_indices
 
 
 --
+-- TOC entry 3463 (class 2606 OID 1195880)
 -- Name: hna_lt_weights hna_lt_weights_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1195,6 +1281,7 @@ ALTER TABLE ONLY public.hna_lt_weights
 
 
 --
+-- TOC entry 3457 (class 2606 OID 780257)
 -- Name: hna_params hna_params_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1203,6 +1290,7 @@ ALTER TABLE ONLY public.hna_params
 
 
 --
+-- TOC entry 3424 (class 2606 OID 195652)
 -- Name: knex_migrations_lock knex_migrations_lock_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1211,6 +1299,7 @@ ALTER TABLE ONLY public.knex_migrations_lock
 
 
 --
+-- TOC entry 3422 (class 2606 OID 195645)
 -- Name: knex_migrations knex_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1219,6 +1308,7 @@ ALTER TABLE ONLY public.knex_migrations
 
 
 --
+-- TOC entry 3414 (class 2606 OID 171362)
 -- Name: post_comment post_comment_new_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1227,6 +1317,7 @@ ALTER TABLE ONLY public.post_comment
 
 
 --
+-- TOC entry 3465 (class 2606 OID 2843984)
 -- Name: profile_curated profile_curated_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1235,6 +1326,7 @@ ALTER TABLE ONLY public.profile_curated
 
 
 --
+-- TOC entry 3410 (class 2606 OID 159823)
 -- Name: profile_post profile_post_new_pkey1; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1243,6 +1335,7 @@ ALTER TABLE ONLY public.profile_post
 
 
 --
+-- TOC entry 3430 (class 2606 OID 196056)
 -- Name: profile_stats profile_stats_new_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1251,6 +1344,7 @@ ALTER TABLE ONLY public.profile_stats
 
 
 --
+-- TOC entry 3406 (class 2606 OID 19512)
 -- Name: profile public_profile_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1259,6 +1353,7 @@ ALTER TABLE ONLY public.profile
 
 
 --
+-- TOC entry 3417 (class 2606 OID 183513)
 -- Name: publication_collect_module_collected_records publication_collect_module_collected_records_new_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1267,6 +1362,7 @@ ALTER TABLE ONLY public.publication_collect_module_collected_records
 
 
 --
+-- TOC entry 3433 (class 2606 OID 196064)
 -- Name: publication_collect_module_details publication_collect_module_details_new_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1275,6 +1371,7 @@ ALTER TABLE ONLY public.publication_collect_module_details
 
 
 --
+-- TOC entry 3436 (class 2606 OID 196071)
 -- Name: publication_collect_module_multirecipient_details publication_collect_module_multirecipient_details_new_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1283,6 +1380,7 @@ ALTER TABLE ONLY public.publication_collect_module_multirecipient_details
 
 
 --
+-- TOC entry 3439 (class 2606 OID 196078)
 -- Name: publication_stats publication_stats_new_pkey1; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1291,6 +1389,7 @@ ALTER TABLE ONLY public.publication_stats
 
 
 --
+-- TOC entry 3445 (class 2606 OID 365153)
 -- Name: publication_reaction_records record_id; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1299,6 +1398,7 @@ ALTER TABLE ONLY public.publication_reaction_records
 
 
 --
+-- TOC entry 3426 (class 2606 OID 195909)
 -- Name: strategies strategies_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1307,6 +1407,7 @@ ALTER TABLE ONLY public.strategies
 
 
 --
+-- TOC entry 3428 (class 2606 OID 195911)
 -- Name: strategies strategies_pt_lt_a_idx; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1315,6 +1416,7 @@ ALTER TABLE ONLY public.strategies
 
 
 --
+-- TOC entry 3418 (class 1259 OID 2874962)
 -- Name: follower_block_timestamp_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1322,6 +1424,7 @@ CREATE INDEX follower_block_timestamp_idx ON public.follower USING btree (block_
 
 
 --
+-- TOC entry 3442 (class 1259 OID 342903)
 -- Name: globaltrust_strategy_name_date_index; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1329,6 +1432,7 @@ CREATE INDEX globaltrust_strategy_name_date_index ON public.globaltrust USING bt
 
 
 --
+-- TOC entry 3459 (class 1259 OID 1168203)
 -- Name: hna_indices_by_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1336,6 +1440,7 @@ CREATE UNIQUE INDEX hna_indices_by_id ON public.hna_indices USING btree (id);
 
 
 --
+-- TOC entry 3448 (class 1259 OID 432319)
 -- Name: idx_k3l_posts_post_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1343,6 +1448,7 @@ CREATE INDEX idx_k3l_posts_post_id ON public.k3l_posts USING btree (post_id);
 
 
 --
+-- TOC entry 3407 (class 1259 OID 432321)
 -- Name: idx_profile_post_block_timestamp; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1350,6 +1456,7 @@ CREATE INDEX idx_profile_post_block_timestamp ON public.profile_post USING btree
 
 
 --
+-- TOC entry 3437 (class 1259 OID 432320)
 -- Name: idx_publication_stats_publication_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1357,6 +1464,7 @@ CREATE INDEX idx_publication_stats_publication_id ON public.publication_stats US
 
 
 --
+-- TOC entry 3450 (class 1259 OID 458695)
 -- Name: k3l_comments_profile_id_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1364,6 +1472,7 @@ CREATE INDEX k3l_comments_profile_id_idx ON public.k3l_comments USING btree (pro
 
 
 --
+-- TOC entry 3451 (class 1259 OID 458696)
 -- Name: k3l_comments_to_profile_id_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1371,6 +1480,7 @@ CREATE INDEX k3l_comments_to_profile_id_idx ON public.k3l_comments USING btree (
 
 
 --
+-- TOC entry 3466 (class 1259 OID 3039653)
 -- Name: k3l_feed_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1378,6 +1488,7 @@ CREATE UNIQUE INDEX k3l_feed_idx ON public.k3l_feed USING btree (pseudo_id);
 
 
 --
+-- TOC entry 3458 (class 1259 OID 945245)
 -- Name: k3l_follow_counts_profile_id_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1385,6 +1496,7 @@ CREATE INDEX k3l_follow_counts_profile_id_idx ON public.k3l_follow_counts USING 
 
 
 --
+-- TOC entry 3467 (class 1259 OID 3069479)
 -- Name: k3l_following_feed_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1392,6 +1504,7 @@ CREATE UNIQUE INDEX k3l_following_feed_idx ON public.k3l_following_feed USING bt
 
 
 --
+-- TOC entry 3446 (class 1259 OID 458697)
 -- Name: k3l_mirrors_profile_id_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1399,6 +1512,7 @@ CREATE INDEX k3l_mirrors_profile_id_idx ON public.k3l_mirrors USING btree (profi
 
 
 --
+-- TOC entry 3447 (class 1259 OID 458698)
 -- Name: k3l_mirrors_to_profile_id_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1406,6 +1520,15 @@ CREATE INDEX k3l_mirrors_to_profile_id_idx ON public.k3l_mirrors USING btree (to
 
 
 --
+-- TOC entry 3449 (class 1259 OID 5077225)
+-- Name: k3l_profiles_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE UNIQUE INDEX k3l_profiles_idx ON public.k3l_profiles USING btree (profile_id);
+
+
+--
+-- TOC entry 3468 (class 1259 OID 4429874)
 -- Name: k3l_rank_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1413,6 +1536,7 @@ CREATE UNIQUE INDEX k3l_rank_idx ON public.k3l_rank USING btree (pseudo_id);
 
 
 --
+-- TOC entry 3469 (class 1259 OID 4430039)
 -- Name: k3l_upvotes_profile_id_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1420,6 +1544,7 @@ CREATE INDEX k3l_upvotes_profile_id_idx ON public.k3l_upvotes USING btree (profi
 
 
 --
+-- TOC entry 3470 (class 1259 OID 4430040)
 -- Name: k3l_upvotes_to_profile_id_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1427,6 +1552,7 @@ CREATE INDEX k3l_upvotes_to_profile_id_idx ON public.k3l_upvotes USING btree (to
 
 
 --
+-- TOC entry 3443 (class 1259 OID 342912)
 -- Name: localtrust_id_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1434,6 +1560,7 @@ CREATE INDEX localtrust_id_idx ON public.localtrust USING btree (strategy_name);
 
 
 --
+-- TOC entry 3412 (class 1259 OID 2874963)
 -- Name: post_comment_block_timestamp_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1441,6 +1568,7 @@ CREATE INDEX post_comment_block_timestamp_idx ON public.post_comment USING btree
 
 
 --
+-- TOC entry 3404 (class 1259 OID 2874965)
 -- Name: profile_block_timestamp_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1448,6 +1576,7 @@ CREATE INDEX profile_block_timestamp_idx ON public.profile USING btree (block_ti
 
 
 --
+-- TOC entry 3408 (class 1259 OID 2874964)
 -- Name: profile_post_block_timestamp_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1455,6 +1584,7 @@ CREATE INDEX profile_post_block_timestamp_idx ON public.profile_post USING btree
 
 
 --
+-- TOC entry 3411 (class 1259 OID 159821)
 -- Name: profile_post_new_post_id_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1462,6 +1592,7 @@ CREATE INDEX profile_post_new_post_id_idx ON public.profile_post USING btree (po
 
 
 --
+-- TOC entry 3415 (class 1259 OID 2874966)
 -- Name: publication_collect_module_collected_records_block_timestamp_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1469,6 +1600,7 @@ CREATE INDEX publication_collect_module_collected_records_block_timestamp_id ON 
 
 
 --
+-- TOC entry 3431 (class 1259 OID 2874967)
 -- Name: publication_collect_module_details_block_timestamp_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1476,6 +1608,7 @@ CREATE INDEX publication_collect_module_details_block_timestamp_idx ON public.pu
 
 
 --
+-- TOC entry 3434 (class 1259 OID 196062)
 -- Name: publication_collect_module_details_new_publication_id_idx1; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -1483,12 +1616,15 @@ CREATE INDEX publication_collect_module_details_new_publication_id_idx1 ON publi
 
 
 --
+-- TOC entry 3473 (class 2606 OID 780263)
 -- Name: hna_gt hna_gt_params_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.hna_gt
     ADD CONSTRAINT hna_gt_params_id_fkey FOREIGN KEY (params_id) REFERENCES public.hna_params(id);
 
+
+-- Completed on 2023-10-28 19:51:29 PDT
 
 --
 -- PostgreSQL database dump complete
