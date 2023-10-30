@@ -23,10 +23,15 @@ AS (
     false AS is_default,
     pm.metadata_uri AS metadata_url,
     pm.metadata_snapshot_location_url AS metadata_s3_url,
-    NULL AS is_metadata_processed,
-    NULL AS has_error,
+    true AS is_metadata_processed,
+    (
+      CASE 
+        WHEN pf.id IS NOT NULL THEN true
+        ELSE false
+      END
+    ) AS has_error,
     NULL AS timeout_request,
-    NULL AS metadata_error_reason,
+    pf.error_reason AS metadata_error_reason,
     pm.app AS app_id,
     pm.block_timestamp AS metadata_block_timestamp,
     pm.block_hash AS metadata_created_block_hash,
@@ -38,6 +43,7 @@ AS (
   FROM
     profile_record AS pr
     JOIN profile_metadata AS pm ON pm.profile_id = pr.profile_id
+    JOIN profile_metadata_failed AS pf ON pf.profile_id = pr.profile_id
     JOIN namespace_handle AS nh ON nh.owned_by = pr.owned_by
   ORDER BY
     profile_id
