@@ -1,7 +1,7 @@
 -- For follower table
 INSERT INTO public.follower
 SELECT * FROM public.follower_tmp
-ON CONFLICT (address, follow_profile_id)
+ON CONFLICT (profile_id, follow_profile_id)
 DO UPDATE SET
     block_timestamp = EXCLUDED.block_timestamp,
     created_block_hash = EXCLUDED.created_block_hash,

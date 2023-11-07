@@ -57,11 +57,11 @@ AS (
     publication_record AS pr
     LEFT JOIN publication_open_action_module_collect_nft AS cn ON cn.publication_id = pr.publication_id
     LEFT JOIN publication_reference_module AS rm ON rm.publication_id = pr.publication_id
-    LEFT JOIN publication_failed AS pf ON pf.tx_hash = pr.tx_hash
+    LEFT JOIN publication_failed AS pf ON pf.tx_hash = pr.tx_hash AND pf.publication_id = pr.publication_id
     LEFT JOIN publication_metadata AS pm ON pm.publication_id = pr.publication_id
     LEFT JOIN _comments ON _comments.publication_id = pr.parent_publication_id
   WHERE
-    pr.publication_type = 'COMMENT'
+    pr.publication_type = 'COMMENT' 
   ORDER BY
     comment_id
 );

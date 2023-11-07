@@ -7,7 +7,7 @@ DB_HOST=${DB_HOST:-172.17.0.1}
 DB_PORT=${DB_PORT:-5432}
 DB_USER=${DB_USER:-postgres}
 DB_NAME=${DB_NAME:-lens_bigquery}
-SQL_TEMPLATE=sql-import-update
+SQL_TEMPLATE=${SQL_TEMPLATE:-sql-import-update}
 SQL_WORKDIR=sql-workdir
 SQL_UPSERT=sql-upsert
 EXPORT_DIR=buckets-update
@@ -51,7 +51,7 @@ log() {
 
 starting_point=''
 
-getStartingPoint() {
+function getStartingPoint() {
   local_table=${1/public_/public.}
   sql="SELECT ${2,,} FROM $local_table ORDER BY ${2,,} DESC LIMIT 1;"
   starting_point=`/usr/bin/psql -t -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "$sql" | head -1 | xargs`
@@ -63,7 +63,8 @@ getStartingPoint() {
 log "Run the queries in BigQuery to export data into Google Cloud Storage"
 mkdir -p ${WORK_DIR}/${SQL_WORKDIR}
 
-for sql_template in ${WORK_DIR}/${SQL_TEMPLATE}/*; do
+function process_sql_template() {
+  local sql_template=$1
   working_sql=${WORK_DIR}/${SQL_WORKDIR}/$(basename $sql_template)
   cp $sql_template $working_sql
   sed -i "s/GCS_BUCKET_NAME/${GCS_BUCKET_NAME}/g" $working_sql
@@ -83,10 +84,22 @@ for sql_template in ${WORK_DIR}/${SQL_TEMPLATE}/*; do
   fi
 
   log "Running $working_sql"
-  /usr/bin/bq query --apilog stdout --use_legacy_sql=false --dataset_id "${BQ_DATASET}" "$(cat $working_sql)" >> $LOG 2>&1
+  /usr/bin/bq query --use_cache --nouse_legacy_sql --dataset_id "${BQ_DATASET}" "$(cat $working_sql)" >> $LOG 2>&1
+}
+
+declare -a pids
+
+for sql_template in ${WORK_DIR}/${SQL_TEMPLATE}/*; do
+  process_sql_template "$sql_template" &
+  pids+=($!)
 done
 
-log "Remove folders in local drive and downloading CSV files from GCS "
+# Wait for all background processes to finish
+for pid in "${pids[@]}"; do
+  wait $pid
+done
+
+log "Remove folders in local drive and downloading CSV files from GCS"
 mkdir -p ${WORK_DIR}/${EXPORT_DIR}
 mkdir -p ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}
 /usr/bin/gsutil -m cp -r "gs://${GCS_BUCKET_NAME}/*" ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}/ >> $LOG 2>&1
@@ -98,8 +111,8 @@ fi
 # Define an array to store directory names
 dirs=()
 
-# Loop through all directories in the current directory and add them to the array
-for dir in ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}/*/; do
+function process_db_updates() {
+  local dir=$1
   # Remove the trailing slash from the directory name
   dir="${dir%/}"
   dirs+=("$dir")
@@ -128,11 +141,27 @@ for dir in ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}/*/; do
     /usr/bin/psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f ${WORK_DIR}/${SQL_UPSERT}/$table_name.sql >> $LOG 2>&1
     /usr/bin/psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "DROP TABLE $local_table${tmp_suffix}" >> $LOG 2>&1
   fi
+}
+
+declare -a db_pids
+
+# Loop through all directories in the current directory and add them to the array
+for dir in ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}/*/; do
+  process_db_updates "$dir" &
+  db_pids+=($!)
+done
+
+# Wait for all background processes to finish
+for db_pids in "${db_pids[@]}"; do
+  wait $db_pids
 done
 
 log "Backup work directory for audit purposes and clean it up the temporary folder"
 rm -fr ${WORK_DIR}/${EXPORT_DIR}/*
 cp -pr ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}/* ${WORK_DIR}/${EXPORT_DIR}/
 rm -fr ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}
+
+log "Refreshing materialized views"
+/usr/bin/psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f ${WORK_DIR}/refresh_materialized_view.sql
 
 log "Script $0 COMPLETED!"
