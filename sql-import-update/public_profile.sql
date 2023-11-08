@@ -42,11 +42,11 @@ AS (
     pr.datastream_metadata.source_timestamp 
   FROM
     profile_record AS pr
-    JOIN profile_metadata AS pm ON pm.profile_id = pr.profile_id
-    JOIN profile_metadata_failed AS pf ON pf.profile_id = pr.profile_id
-    JOIN namespace_handle AS nh ON nh.owned_by = pr.owned_by
+    LEFT JOIN profile_metadata AS pm ON pm.profile_id = pr.profile_id AND pm.tx_hash = pr.tx_hash
+    LEFT JOIN profile_metadata_failed AS pf ON pf.profile_id = pr.profile_id AND pf.tx_hash = pr.tx_hash
+    LEFT JOIN namespace_handle AS nh ON nh.owned_by = pr.owned_by AND nh.tx_hash = pr.tx_hash
   WHERE
-    block_timestamp > 'BLOCK_TIMESTAMP'
+    pr.block_timestamp > 'BLOCK_TIMESTAMP'
   ORDER BY
-    block_timestamp DESC
+    pr.lock_timestamp DESC
 );
