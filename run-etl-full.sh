@@ -7,11 +7,11 @@ DB_HOST=${DB_HOST:-172.17.0.1}
 DB_PORT=${DB_PORT:-5432}
 DB_USER=${DB_USER:-postgres}
 DB_NAME=${DB_NAME:-lens_bigquery}
-SQL_TEMPLATE=${SQL_TEMPLATE:-sql-import-full}
+SQL_TEMPLATE=${SQL_TEMPLATE:-"sql-import-full"}
 EXPORT_DIR=buckets-full
 LOG_DIR=${LOG_DIR:-"/var/log/lens-etl"}
 LOG=${LOG_DIR}/$(basename "$0").log
-BQ_DATASET=${BQ_DATASET:-lens-public-data:polygon}
+BQ_DATASET=${BQ_DATASET:-"lens-public-data:v2_polygon"}
 
 # Remove the comment below to debug
 set -x
@@ -42,7 +42,7 @@ function process_sqlfile() {
   local sqlfile=$1
   log "Running $sqlfile"
   sed "s/GCS_BUCKET_NAME/${GCS_BUCKET_NAME}/g" $sqlfile > $sqlfile-${JOBTIME}
-  /usr/bin/bq query --use_cache --nouse_legacy_sql --dataset_id "${BQ_DATASET}" "$(cat $sqlfile-${JOBTIME})" >> $LOG 2>&1 &
+  /usr/bin/bq query --nouse_cache --nouse_legacy_sql --dataset_id "${BQ_DATASET}" "$(cat $sqlfile-${JOBTIME})" >> $LOG 2>&1
   rm $sqlfile-${JOBTIME}
 }
 

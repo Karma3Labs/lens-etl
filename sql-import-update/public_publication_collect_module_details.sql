@@ -6,7 +6,6 @@ EXPORT DATA
     header = true,
     field_delimiter = ',')
 AS (
-  SELECT * except(row_num) FROM (
     SELECT 
       publication_id,
       implementation,
@@ -29,7 +28,5 @@ AS (
       amount IS NOT NULL
     ORDER BY
       publication_id
-  ) t
-  WHERE row_num=1
 );
 

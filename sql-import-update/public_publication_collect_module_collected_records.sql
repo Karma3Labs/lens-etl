@@ -9,13 +9,13 @@ AS (
   SELECT 
     publication_id,
     owner_address as collected_by,
-    -- referral_id,
+    NULL as referral_id,
     token_id as collect_publication_nft_id,
     block_timestamp,
     block_hash as created_block_hash,
     publication_id || '-' || token_id as record_id,
-    -- is_finalised_on_chain,
-    -- optimistic_id,
+    true as is_finalised_on_chain,
+    NULL as optimistic_id,
     datastream_metadata.uuid, 
     datastream_metadata.source_timestamp 
   FROM

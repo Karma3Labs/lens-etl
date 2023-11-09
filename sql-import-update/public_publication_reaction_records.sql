@@ -6,18 +6,18 @@ EXPORT DATA
     header = true,
     field_delimiter = ',')
 AS (
-  SELECT
-    publication_id,
-    reaction,
-    actioned_by_profile_id,
-    action_at,
-    undone_on,
-    has_undone,
-    record_id,
+  SELECT 
+    pr.publication_id,
+    pr.type as reaction,
+    pr.actioned_by_profile_id,
+    pr.action_at,
+    null AS undone_on,
+    false AS has_undone,
+    null AS record_id,
     datastream_metadata.uuid,
     datastream_metadata.source_timestamp
   FROM
-    public_publication_reaction_records
+    publication_reaction AS pr
   WHERE
     action_at > 'ACTION_AT'
   ORDER BY

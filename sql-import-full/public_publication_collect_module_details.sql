@@ -1,4 +1,3 @@
--- BQ has duplicates whereas in PG we don't want duplicates
 EXPORT DATA
   OPTIONS (
     uri = 'gs://GCS_BUCKET_NAME/public_publication_collect_module_details/*.csv',
@@ -7,7 +6,6 @@ EXPORT DATA
     header = true,
     field_delimiter = ',')
 AS (
-  SELECT * except(row_num) FROM (
     SELECT 
       publication_id,
       implementation,
@@ -30,6 +28,4 @@ AS (
       amount IS NOT NULL
     ORDER BY
       publication_id
-  ) t
-  WHERE row_num=1
 );
