@@ -162,6 +162,6 @@ cp -pr ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}/* ${WORK_DIR}/${EXPORT_DIR}/
 rm -fr ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}
 
 log "Refreshing materialized views"
-/usr/bin/psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f ${WORK_DIR}/refresh_materialized_view.sql
+/usr/bin/psql -e -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f ${WORK_DIR}/refresh_materialized_view.sql >> $LOG 2>&1
 
 log "Script $0 COMPLETED!"
