@@ -1,4 +1,4 @@
-refresh materialized view k3l_profiles;
+refresh materialized view concurrently k3l_profiles;
 refresh materialized view k3l_posts;
 refresh materialized view k3l_follows;
 refresh materialized view k3l_mirrors;
