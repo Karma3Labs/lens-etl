@@ -581,7 +581,7 @@ CREATE MATERIALIZED VIEW public.k3l_feed AS
  SELECT row_number() OVER () AS pseudo_id,
     k3l_posts.post_id,
     k3l_profiles.handle,
-    gt.rank,
+    k3l_profiles.profile_id,
     publication_stats.total_amount_of_mirrors AS mirrors_count,
     publication_stats.total_amount_of_comments AS comments_count,
     publication_stats.total_amount_of_collects AS collects_count,
@@ -592,16 +592,10 @@ CREATE MATERIALIZED VIEW public.k3l_feed AS
     k3l_posts.content_uri,
     profile_post.main_content_focus,
     profile_post.language
-   FROM (((((public.feed
+   FROM ((((public.feed
      JOIN public.k3l_posts ON (((k3l_posts.post_id)::text = feed.post_id)))
      JOIN public.publication_stats ON ((feed.post_id = (publication_stats.publication_id)::text)))
      JOIN public.k3l_profiles ON (((k3l_posts.profile_id)::text = (k3l_profiles.profile_id)::text)))
-     JOIN ( SELECT row_number() OVER (ORDER BY globaltrust.v DESC) AS rank,
-            globaltrust.i AS profile_id
-           FROM public.globaltrust
-          WHERE (((globaltrust.strategy_name)::text = 'engagement'::text) AND (globaltrust.date = ( SELECT max(globaltrust_1.date) AS max
-                   FROM public.globaltrust globaltrust_1
-                  WHERE ((globaltrust_1.strategy_name)::text = 'engagement'::text))))) gt ON (((gt.profile_id)::text = (k3l_posts.profile_id)::text)))
      JOIN public.profile_post ON (((k3l_posts.post_id)::text = (profile_post.post_id)::text)))
   WHERE ((profile_post.is_related_to_post IS NULL) AND (profile_post.is_related_to_comment IS NULL) AND (profile_post.has_error <> true) AND (profile_post.is_hidden <> true) AND (profile_post.is_gated <> true) AND (profile_post.custom_filters_gardener_flagged <> true) AND (profile_post.content_warning IS NULL))
   WITH NO DATA;
