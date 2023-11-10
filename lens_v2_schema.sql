@@ -614,10 +614,10 @@ ALTER TABLE public.k3l_feed OWNER TO postgres;
 --
 
 CREATE MATERIALIZED VIEW public.k3l_follow_counts AS
- SELECT follower.follow_profile_id AS to_profile_id,
+ SELECT follower.profile_id AS to_profile_id,
     count(*) AS count
    FROM public.follower
-  GROUP BY follower.follow_profile_id
+  GROUP BY follower.profile_id
   WITH NO DATA;
 
 
@@ -1378,10 +1378,10 @@ CREATE UNIQUE INDEX k3l_feed_idx ON public.k3l_feed USING btree (pseudo_id);
 
 
 --
--- Name: k3l_follow_counts_profile_id_idx; Type: INDEX; Schema: public; Owner: postgres
+-- Name: k3l_follow_counts_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX k3l_follow_counts_profile_id_idx ON public.k3l_follow_counts USING btree (to_profile_id);
+CREATE UNIQUE INDEX k3l_follow_counts_idx ON public.k3l_follow_counts USING btree (to_profile_id);
 
 
 --
