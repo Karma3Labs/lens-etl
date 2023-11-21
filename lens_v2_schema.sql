@@ -1041,6 +1041,17 @@ CREATE TABLE public.profile_stats (
 ALTER TABLE public.profile_stats OWNER TO postgres;
 
 --
+-- Name: profile_suggests; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.profile_suggests (
+    json_data jsonb
+);
+
+
+ALTER TABLE public.profile_suggests OWNER TO postgres;
+
+--
 -- Name: publication_collect_module_multirecipient_details; Type: TABLE; Schema: public; Owner: postgres
 --
 
