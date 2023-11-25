@@ -73,7 +73,10 @@ function process_sql_template() {
   table_name=$(basename ${sql_template%.*})
 
   # Clear out the export data destination (Google Cloud Storage bucket)
-  /usr/bin/gsutil -m rm -r "gs://${GCS_BUCKET_NAME}/$table_name" >> $LOG 2>&1  
+  # parallel_process_count and parallel_thread_count added to address process hanging issue
+  # reference - https://github.com/GoogleCloudPlatform/gsutil/issues/464
+  /usr/bin/gsutil -m -o GSUtil:parallel_process_count=1 -o GSUtil:parallel_thread_count=24 \ 
+    rm -r "gs://${GCS_BUCKET_NAME}/$table_name" >> $LOG 2>&1  
 
   if [ "${bq_table_behavior[$table_name]}" != "REPLACE" ]; then
     getStartingPoint $table_name ${bq_table_behavior[$table_name]}
