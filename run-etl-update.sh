@@ -58,7 +58,8 @@ function getStartingPoint() {
 }
 
 #log "Clear out Cloud Storage buckets"
-/usr/bin/gsutil -m rm -r "gs://${GCS_BUCKET_NAME}/*" >> $LOG 2>&1
+/usr/bin/gsutil -m -o GSUtil:parallel_process_count=1 -o GSUtil:parallel_thread_count=24 \
+  rm -r "gs://${GCS_BUCKET_NAME}/*" >> $LOG 2>&1
 
 log "Run the queries in BigQuery to export data into Google Cloud Storage"
 mkdir -p ${WORK_DIR}/${SQL_WORKDIR}
@@ -105,7 +106,8 @@ done
 log "Remove folders in local drive and downloading CSV files from GCS"
 mkdir -p ${WORK_DIR}/${EXPORT_DIR}
 mkdir -p ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}
-/usr/bin/gsutil -m cp -r "gs://${GCS_BUCKET_NAME}/*" ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}/ >> $LOG 2>&1
+/usr/bin/gsutil -m -o GSUtil:parallel_process_count=1 -o GSUtil:parallel_thread_count=24 \
+  cp -r "gs://${GCS_BUCKET_NAME}/*" ${WORK_DIR}/${EXPORT_DIR}-${JOBTIME}/ >> $LOG 2>&1
 
 if [ $GCP_TASK_ACCT != $GCP_ACTIVE_ACCT ]; then
   gcloud config set account "$GCP_ACTIVE_ACCT"
