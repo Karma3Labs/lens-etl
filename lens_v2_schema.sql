@@ -928,6 +928,7 @@ ALTER TABLE public.k3l_interactions OWNER TO postgres;
 CREATE MATERIALIZED VIEW public.k3l_rank AS
  SELECT row_number() OVER () AS pseudo_id,
     row_number() OVER (PARTITION BY globaltrust.date, globaltrust.strategy_name ORDER BY globaltrust.v DESC) AS rank,
+    globaltrust.v AS score,
     globaltrust.i AS profile_id,
     globaltrust.strategy_name,
     globaltrust.date
