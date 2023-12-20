@@ -548,7 +548,7 @@ CREATE MATERIALIZED VIEW public.k3l_profiles AS
     profile.owned_by AS owner_address,
     profile.handle,
     profile.profile_picture_s3_url AS image_uri,
-    profile.metadata_block_timestamp AS created_at
+    profile.block_timestamp AS created_at
    FROM public.profile
   WITH NO DATA;
 
